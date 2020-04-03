@@ -13,7 +13,8 @@ function dist(a,b){
 }
 
 function toNeat(a,b){
-	return Math.abs(a.y-b.y)+a.x;
+	if((a.x-b.x)*(a.y-b.y)>0)return new Point(a.x+b.y-a.y,b.y);
+	return new Point(a.x+a.y-b.y,b.y);
 }
 
 
@@ -132,15 +133,15 @@ function process(start,end){
 			s=new Circle(start,dist(start,end));
 			break;
 		case "1":
-			if(neat)end.x=toNeat(start,end);
+			if(neat)end=toNeat(start,end);
 			s=new Rect(start,end);
 			break;
 		case "2":
-			if(neat)end.x=toNeat(start,end);
+			if(neat)end=toNeat(start,end);
 			s=new RT(start,end);
 			break;
 		case "3":
-			if(neat)end.x=toNeat(start,end);
+			if(neat)end=toNeat(start,end);
 			s=new Diamond(start,end);
 			break;
 	}
