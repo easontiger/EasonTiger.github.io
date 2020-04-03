@@ -134,7 +134,6 @@ document.getElementById("canvas").onmousemove=function(e){
 		can.beginPath();
 		can.moveTo(list_start[i].x,list_start[i].y);
 		can.lineTo(list_end[i].x,list_end[i].y);
-		can.closePath();
 		can.stroke();
 	}
 	start=list_end[0];
