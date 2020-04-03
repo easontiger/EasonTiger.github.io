@@ -132,16 +132,12 @@ document.getElementById("canvas").onmousemove=function(e){
 	var list_start=reflect_p(start),list_end=reflect_p(new Point(e.pageX,e.pageY));
 	for(i in list_end){
 		can.beginPath();
-		line(list_start[i],list_end[i]);
+		can.moveTo(list_start[i].x,list_start[i].y);
+		can.lineTo(list_end[i].x,list_end[i].y);
+		can.closePath();
+		can.stroke();
 	}
 	start=list_end[0];
-}
-
-function line(fp,tp){
-	can.beginPath();
-	can.moveTo(fp.x,fp.y);
-	can.lineTo(tp.x,tp.y);
-	can.stroke();
 }
 
 function process(start,end){
