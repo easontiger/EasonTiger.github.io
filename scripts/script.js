@@ -19,7 +19,7 @@ function toNeat(a,b){
 
 
 
-var shape="0",fill=true,reflect="1",neat=false,filename="a";
+var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0";
 const can=document.getElementById("canvas").getContext("2d");
 can.fillStyle="#000";
 can.strokeStyle="#000";
@@ -111,13 +111,14 @@ $("#color").change(function(){
 var start;
 
 document.getElementById("canvas").onmousedown=function(e){
-    start=new Point(e.pageX,e.pageY);
+	start=new Point(e.pageX,e.pageY);
 };
 
-var cir;
-
 document.getElementById("canvas").onmouseup=function(e){
-    if(start==null)return;
+    if(start==null||pen!="1"){
+		start=null;
+		return;
+	}
 	var end=new Point(e.pageX,e.pageY);
 	var list_start=reflect_p(start),list_end=reflect_p(end);
 	for(i in list_end){
@@ -125,6 +126,23 @@ document.getElementById("canvas").onmouseup=function(e){
 	}
 	start=null;
 };
+
+document.getElementById("canvas").onmousemove=function(e){
+	if(start==null||pen!="0")return;
+	var list_start=reflect_p(start),list_end=reflect_p(new Point(e.pageX,e.pageY));
+	for(i in list_end){
+		can.beginPath();
+		line(list_start[i],list_end[i]);
+	}
+	start=list_end[0];
+}
+
+function line(fp,tp){
+	can.beginPath();
+	can.moveTo(fp.x,fp.y);
+	can.lineTo(tp.x,tp.y);
+	can.stroke();
+}
 
 function process(start,end){
 	var s;
@@ -231,3 +249,14 @@ $("#down").click(function(){
 	A.click();
 	A.remove();
 });
+
+$("#pen").change(function(){
+	pen=$("#pen").val();
+	if(pen=="0"){
+		$("#s").hide();
+	}else{
+		$("#s").show();
+	}
+});
+
+$("#s").hide();

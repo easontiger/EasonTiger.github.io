@@ -7,24 +7,35 @@
         <canvas id="canvas" width="1500" height="1000"></canvas>
         <b>color:</b>
         <input type="color" id="color"><br>
-        <b>shape:</b>
-        <select id="shape">
-            <option value="0">circle</option>
-            <option value="1" >rectangle</option>
-            <option value="2">right triangle</option>
-            <option value="3">diamond</option>
-        </select><br>
+        <b>pen:</b>
+        <select id="pen">
+            <option value="0">pen</option>
+            <option value="1">shape</option>
+		</select>
+        <div id="s">
+            <b>shape:</b>
+            <select id="shape">
+                <option value="0">circle</option>
+                <option value="1" >rectangle</option>
+                <option value="2">right triangle</option>
+				<option value="3">diamond</option>
+            </select>
         <b>fill?</b>
         <select id="fill">
             <option value="0">fill</option>
             <option value="1">side</option>
-        </select><br>
+        </select>
+		</div>
+		<div>
         <b>border size:</b>
-        <input type="text" id="border" value="1" size="1"><b>px</b>
+		<input type="text" id="border" value="1" size="1"><b>px</b>
+		</div>
+		<button id="down"></button><b>as:</b>
+		<input type="text" id="filename" value="a" size="1">.png
+		<br>
         <button id="clear"></button>
-        <button id="down"></button><b>as:</b>
-        <input type="text" id="filename" value="a" size="1">.png<br>
-        <b>reflect</b>
+		<br>
+		<b>reflect</b>
         <select id="reflect">
             <option value="1">1</option>
             <option value="2">2</option>
