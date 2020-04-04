@@ -119,14 +119,39 @@ document.getElementById("canvas").onmousedown=function(e){
 };
 
 document.getElementById("canvas").onmouseup=function(e){
-    if(start==null||pen!="1"){
+    if(start==null||pen=="0"){
 		start=null;
 		return;
 	}
-	var end=new Point(e.pageX,e.pageY);
-	var list_start=reflect_p(start),list_end=reflect_p(end);
-	for(i in list_end){
-		process(list_start[i],list_end[i]);
+	if(pen=="1"){
+		var end=new Point(e.pageX,e.pageY);
+		var list_start=reflect_p(start),list_end=reflect_p(end);
+		for(i in list_end){
+			process(list_start[i],list_end[i]);
+		}
+	}else if(pen=="2"){
+		var sx=start.x,sy=start.y,ex=e.pageX,ey=e.pageY;
+		can.beginPath();
+		switch(reflect){
+			case "4":
+				can.moveTo(width-sx,height-sy);
+				can.lineTo(width-ex,height-ey);
+				can.moveTo(sx,height-sy);
+				can.lineTo(ex,height-ey);
+			case "2v":
+				can.moveTo(width-sx,sy);
+				can.lineTo(width-ex,ey);
+				can.moveTo(sx,sy);
+				can.lineTo(ex,ey);
+				break;
+			case "2p":
+				can.moveTo(sx,height-sy);
+				can.lineTo(ex,height-ey);
+			case "1":
+				can.moveTo(sx,sy);
+				can.lineTo(ex,ey);
+		}
+		can.stroke();
 	}
 	start=null;
 };
@@ -168,21 +193,24 @@ function process(start,end){
 	switch(shape){
 		case "0":
 			s=new Circle(start,dist(start,end));
+			s.draw();
 			break;
 		case "1":
 			if(neat)end=toNeat(start,end);
 			s=new Rect(start,end);
+			s.draw();
 			break;
 		case "2":
 			if(neat)end=toNeat(start,end);
 			s=new RT(start,end);
+			s.draw();
 			break;
 		case "3":
 			if(neat)end=toNeat(start,end);
 			s=new Diamond(start,end);
+			s.draw();
 			break;
 	}
-	s.draw();
 }
 
 $("#clear").html("<b>clear</b>");
@@ -196,7 +224,7 @@ $("#clear").click(function(){
 });
 
 $("#shape").change(function(){
-    shape=$("#shape").val();
+	shape=$("#shape").val();
 });
 
 $("#fill").change(function(){
@@ -275,7 +303,7 @@ $("#down").click(function(){
 
 $("#pen").change(function(){
 	pen=$("#pen").val();
-	if(pen=="0"){
+	if(pen!="1"){
 		$("#s").hide();
 	}else{
 		$("#s").show();
