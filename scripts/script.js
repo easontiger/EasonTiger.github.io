@@ -164,7 +164,7 @@ document.getElementById("canvas").onmousedown=function(e){
 
 document.getElementById("canvas").ontouchmove=function(e){
 	if(start==null||pen!="0")return;
-	var sx=start.x,sy=start.y,ex=e.pageX,ey=e.pageY;
+	var sx=start.x,sy=start.y,ex=e.touches[0].pageX,ey=e.touches[0].pageY;
 	can.beginPath();
 	switch(reflect){
 		case "4":
@@ -194,7 +194,7 @@ document.getElementById("canvas").ontouchend=function(e){
 		start=null;
 		return;
 	}
-	var end=new Point(e.pageX,e.pageY);
+	var end=new Point(e.changedTouches[0].pageX,e.changedTouches[0].pageY);
 	var list_start=reflect_p(start),list_end=reflect_p(end);
 	for(i in list_end){
 		process(list_start[i],list_end[i]);
