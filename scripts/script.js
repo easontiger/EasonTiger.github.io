@@ -129,14 +129,23 @@ document.getElementById("canvas").onmouseup=function(e){
 
 document.getElementById("canvas").onmousemove=function(e){
 	if(start==null||pen!="0")return;
-	var list_start=reflect_p(start),list_end=reflect_p(new Point(e.pageX,e.pageY));
-	for(var i=0;i<list_end.length;i++){
-		can.beginPath();
-		can.moveTo(list_start[i].x,list_start[i].y);
-		can.lineTo(list_end[i].x,list_end[i].y);
-		can.stroke();
+	var sx=start.x,sy=start.y,ex=e.pageX,ey=e.pageY;
+	can.beginPath();
+	switch(reflect){
+		case "4":
+			can.moveTo(width-sx,height-sy);
+			can.lineTo(width-ex,height-ey);
+			can.moveTo(sx,height-sy);
+			can.lineTo(ex,height-ey);
+		case "2":
+			can.moveTo(width-sx,sy);
+			can.lineTo(width-ex,ey);
+		case "1":
+			can.moveTo(sx,sy);
+			can.lineTo(ex,ey);
 	}
-	start=list_end[0];
+	can.stroke();
+	start=new Point(e.pageX,e.pageY);
 }
 
 function process(start,end){
