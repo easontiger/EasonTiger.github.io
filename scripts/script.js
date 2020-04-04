@@ -158,6 +158,10 @@ document.getElementById("canvas").onmousemove=function(e){
 	start=new Point(e.pageX,e.pageY);
 }
 
+document.getElementById("canvas").onmouseleave=function(){
+	start=null;
+}
+
 function process(start,end){
 	var s;
 	switch(shape){
