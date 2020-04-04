@@ -266,9 +266,11 @@ $("#down").click(function(){
 	var A=document.createElement("a");
 	A.download=filename;
 	A.href=canvas.toDataURL("image/png");
+	var co=can.fillStyle;
 	document.body.appendChild(A);
 	A.click();
 	A.remove();
+	can.fillStyle=can.strokeStyle=co;
 });
 
 $("#pen").change(function(){
