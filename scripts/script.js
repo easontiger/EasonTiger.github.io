@@ -23,7 +23,7 @@ var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0";
 const can=document.getElementById("canvas").getContext("2d");
 can.fillStyle="#000";
 can.strokeStyle="#000";
-const width=1500,height=1000;
+var width=1500,height=1000;
 
 function reflect_p(p){
 	var list=[];
@@ -280,3 +280,15 @@ $("#pen").change(function(){
 });
 
 $("#s").hide();
+
+height=document.documentElement.clientHeight;
+width=document.documentElement.clientWidth;
+document.getElementById("canvas").height=height;
+document.getElementById("canvas").width=width;
+
+window.onresize=function(){
+	height=document.documentElement.clientHeight;
+	width=document.documentElement.clientWidth;
+	document.getElementById("canvas").height=height;
+	document.getElementById("canvas").width=width;
+};
