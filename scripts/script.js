@@ -158,7 +158,9 @@ document.getElementById("canvas").onmousemove=function(e){
 	start=new Point(e.pageX,e.pageY);
 }
 
-document.getElementById("canvas").ontouchstart=document.getElementById("canvas").onmousedown;
+document.getElementById("canvas").ontouchstart=function(){
+	document.write(1);
+};
 document.getElementById("canvas").ontouchmove=document.getElementById("canvas").onmousemove;
 document.getElementById("canvas").ontouchend=document.getElementById("canvas").onmouseup;
 
