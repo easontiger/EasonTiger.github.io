@@ -130,7 +130,7 @@ document.getElementById("canvas").onmouseup=function(e){
 document.getElementById("canvas").onmousemove=function(e){
 	if(start==null||pen!="0")return;
 	var list_start=reflect_p(start),list_end=reflect_p(new Point(e.pageX,e.pageY));
-	for(i in list_end){
+	for(var i=0;i<list_end.length;i++){
 		can.beginPath();
 		can.moveTo(list_start[i].x,list_start[i].y);
 		can.lineTo(list_end[i].x,list_end[i].y);
