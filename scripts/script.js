@@ -30,8 +30,12 @@ function reflect_p(p){
 	switch(reflect){
 		case "4":
 			list.push(new Point(width-p.x,height-p.y),new Point(p.x,height-p.y));
-		case "2":
+		case "2v":
 			list.push(new Point(width-p.x,p.y));
+			list.push(p);
+			break;
+		case "2p":
+			list.push(new Point(p.x,height-p.y));
 		case "1":
 			list.push(p);
 	}
@@ -137,9 +141,15 @@ document.getElementById("canvas").onmousemove=function(e){
 			can.lineTo(width-ex,height-ey);
 			can.moveTo(sx,height-sy);
 			can.lineTo(ex,height-ey);
-		case "2":
+		case "2v":
 			can.moveTo(width-sx,sy);
 			can.lineTo(width-ex,ey);
+			can.moveTo(sx,sy);
+			can.lineTo(ex,ey);
+			break;
+		case "2p":
+			can.moveTo(sx,height-sy);
+			can.lineTo(ex,height-ey);
 		case "1":
 			can.moveTo(sx,sy);
 			can.lineTo(ex,ey);
@@ -174,8 +184,10 @@ $("#clear").html("<b>clear</b>");
 $("#down").html("<b>download<b>");
 
 $("#clear").click(function(){
+	fs=can.fillStyle;
     document.getElementById("canvas").getContext("2d").fillStyle="#fff";
-    document.getElementById("canvas").getContext("2d").fillRect(0,0,width,height);
+	document.getElementById("canvas").getContext("2d").fillRect(0,0,width,height);
+	can.fillStyle=fs;
 });
 
 $("#shape").change(function(){
