@@ -247,7 +247,14 @@ $("#reflect").change(function(){
 });
 
 $("#rotate").change(function(){
-	rotate=$("#rotate").val();
+	var ro=$("#rotate").val();
+	var num=/^[0-9]+$/;
+	if(num.test(ro)){
+		rotate=ro;
+	}else{
+		$("#warning").html("<font color=\"#e00\"><b>Invalid input for rotate number!</b></font>");
+		$("#rotate").val(ro);
+	}
 });
 
 $("#border").change(function(){
