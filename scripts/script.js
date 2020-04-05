@@ -16,7 +16,7 @@ function toNeat(a,b){
 
 
 
-var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0",rotate=1;
+var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0",rotate=1,side=3;
 const can=document.getElementById("canvas").getContext("2d");
 can.fillStyle="#000";
 can.strokeStyle="#000";
@@ -82,6 +82,22 @@ class Diamond{
 		can.lineTo(x,this.b.y);
 		can.lineTo(this.a.x,y);
 		can.closePath();
+		can.stroke();
+		if(fill)can.fill();
+	}
+}
+
+class polygon{
+	constructor(s,t){
+		this.s=s;
+		this.t=t;
+	}
+	draw(){
+		can.beginPath();
+		can.moveTo(this.s.x,this.s.y);
+		for(var i=0;i<360;i+=360/side){
+			can.lineTo(spin(this.s,i,this.t).x,spin(this.s,i,this.t).y);
+		}
 		can.stroke();
 		if(fill)can.fill();
 	}
@@ -181,15 +197,17 @@ document.getElementById("canvas").onmouseleave=function(){
 	start=null;
 }
 
-function spin(p,a){
-	var ox=width/2,oy=height/2,px=p.x,py=p.y;
+function spin(p,a,o){
+	var ox=o.x,oy=o.y,px=p.x,py=p.y;
 	a*=2*Math.PI/360;
 	return new Point((px-ox)*Math.cos(a)-(py-oy)*Math.sin(a)+ox,(px-ox)*Math.sin(a)+(py-oy)*Math.cos(a)+oy);
 }
 
+var o=new Point(width/2,height/2);
+
 function process(start,end){
 	for(var i=0;i<360;i+=360/rotate){
-		pro(spin(start,i),spin(end,i));
+		pro(spin(start,i,o),spin(end,i,o));
 	}
 }
 
@@ -215,6 +233,10 @@ function pro(start,end){
 			s=new Diamond(start,end);
 			s.draw();
 			break;
+		case "4":
+			s=new polygon(start,end);
+			s.draw();
+			break;
 	}
 	else if(pen=="2"||pen=="0"){
 		can.beginPath();
@@ -236,6 +258,11 @@ $("#clear").click(function(){
 
 $("#shape").change(function(){
 	shape=$("#shape").val();
+	if(shape!="4"){
+		$("#side").hide();
+	}else{
+		$("#side").show();
+	}
 });
 
 $("#fill").change(function(){
@@ -249,18 +276,18 @@ $("#reflect").change(function(){
 $("#rotate").change(function(){
 	var ro=$("#rotate").val();
 	var num=/^[0-9]+$/;
-	if(num.test(ro)){
+	if(num.test(ro)&&ro>=1){
 		rotate=ro;
 	}else{
 		$("#warning").html("<font color=\"#e00\"><b>Invalid input for rotate number!</b></font>");
-		$("#rotate").val(ro);
+		$("#rotate").val(rotate);
 	}
 });
 
 $("#border").change(function(){
 	var width=$("#border").val();
 	var num=/^[0-9]+$/;
-	if(num.test(width)){
+	if(num.test(width)&&width>=1){
 		can.lineWidth=width;
 	}else{
 		$("#warning").html("<font color=\"#e00\"><b>Invalid input for line width!</b></font>");
@@ -333,6 +360,7 @@ $("#pen").change(function(){
 });
 
 $("#s").hide();
+$("#side").hide();
 
 height=document.documentElement.clientHeight;
 width=height;
@@ -345,3 +373,14 @@ window.onresize=function(){
 	document.getElementById("canvas").height=height;
 	document.getElementById("canvas").width=width;
 };
+
+$("#sides").change(function(){
+	var s=parseInt($("#sides").val());
+	var num=/^[0-9]+$/;
+	if(num.test(s)&&s>=3){
+		side=s;
+	}else{
+		$("#warning").html("<font color=\"#e00\"><b>Invalid input for line width!</b></font>");
+		$("#sides").val(side);
+	}
+});
