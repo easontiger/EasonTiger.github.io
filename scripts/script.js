@@ -3,9 +3,6 @@ class Point{
         this.x=x;
         this.y=y;
     }
-    toString(){
-        return "("+this.x.toString()+","+this.y.toString()+")";
-    }
 }
 
 function dist(a,b){
@@ -24,23 +21,6 @@ const can=document.getElementById("canvas").getContext("2d");
 can.fillStyle="#000";
 can.strokeStyle="#000";
 var width=1500,height=1000;
-
-function reflect_p(p){
-	var list=[];
-	switch(reflect){
-		case "4":
-			list.push(new Point(width-p.x,height-p.y),new Point(p.x,height-p.y));
-		case "2v":
-			list.push(new Point(width-p.x,p.y));
-			list.push(p);
-			break;
-		case "2p":
-			list.push(new Point(p.x,height-p.y));
-		case "1":
-			list.push(p);
-	}
-	return list;
-}
 
 class Circle{
     constructor(o,r){
@@ -118,40 +98,47 @@ document.getElementById("canvas").onmousedown=function(e){
 	start=new Point(e.pageX,e.pageY);
 };
 
+function re(x,y,k,b){
+	return new Point((x+2*k*(y-b)-x*k*k)/(k*k+1),((2*k*x+y*k*k+2*b-y)/(k*k+1)));
+}
+
+function r(p,k,b){
+	return new Point((p.x+2*k*(p.y-b)-p.x*k*k)/(k*k+1),((2*k*p.x+p.y*k*k+2*b-p.y)/(k*k+1)));
+}
+
 document.getElementById("canvas").onmouseup=function(e){
     if(start==null||pen=="0"){
 		start=null;
 		return;
 	}
-	if(pen=="1"){
-		var end=new Point(e.pageX,e.pageY);
-		var list_start=reflect_p(start),list_end=reflect_p(end);
-		for(i in list_end){
-			process(list_start[i],list_end[i]);
-		}
-	}else if(pen=="2"){
-		var sx=start.x,sy=start.y,ex=e.pageX,ey=e.pageY;
-		can.beginPath();
-		switch(reflect){
-			case "4":
-				can.moveTo(width-sx,height-sy);
-				can.lineTo(width-ex,height-ey);
-				can.moveTo(sx,height-sy);
-				can.lineTo(ex,height-ey);
-			case "2v":
-				can.moveTo(width-sx,sy);
-				can.lineTo(width-ex,ey);
-				can.moveTo(sx,sy);
-				can.lineTo(ex,ey);
-				break;
-			case "2p":
-				can.moveTo(sx,height-sy);
-				can.lineTo(ex,height-ey);
-			case "1":
-				can.moveTo(sx,sy);
-				can.lineTo(ex,ey);
-		}
-		can.stroke();
+	var sx=start.x,sy=start.y,ex=e.pageX,ey=e.pageY;
+	switch(reflect){
+		case "4pv":
+			process(new Point(width-sx,height-sy),new Point(width-ex,height-ey));
+			process(new Point(sx,height-sy),new Point(ex,height-ey));
+		case "2v":
+			process(new Point(width-sx,sy),new Point(width-ex,ey));
+			process(start,new Point(ex,ey));
+			break;
+		case "2p":
+			process(new Point(sx,height-sy),new Point(ex,height-ey));
+		case "1":
+			process(start,new Point(ex,ey));
+			break;
+		case "2x":
+			var k=height/width;
+			process(start,new Point(ex,ey));
+			process(r(start,1,0),re(ex,ey,1,0));
+			break;
+		case "2y":
+			process(start,new Point(ex,ey));
+			process(re(sx,sy,-1,height),re(ex,ey,-1,height));
+			break;
+		case "4xy":
+			process(start,new Point(ex,ey));
+			process(r(start,1,0),re(ex,ey,1,0));
+			process(re(sx,sy,-1,height),re(ex,ey,-1,height));
+			process(r(r(start,-1,height),1,0),r(r(new Point(ex,ey),-1,height),1,0));
 	}
 	start=null;
 };
@@ -159,27 +146,33 @@ document.getElementById("canvas").onmouseup=function(e){
 document.getElementById("canvas").onmousemove=function(e){
 	if(start==null||pen!="0")return;
 	var sx=start.x,sy=start.y,ex=e.pageX,ey=e.pageY;
-	can.beginPath();
 	switch(reflect){
-		case "4":
-			can.moveTo(width-sx,height-sy);
-			can.lineTo(width-ex,height-ey);
-			can.moveTo(sx,height-sy);
-			can.lineTo(ex,height-ey);
+		case "4pv":
+			process(new Point(width-sx,height-sy),new Point(width-ex,height-ey));
+			process(new Point(sx,height-sy),new Point(ex,height-ey));
 		case "2v":
-			can.moveTo(width-sx,sy);
-			can.lineTo(width-ex,ey);
-			can.moveTo(sx,sy);
-			can.lineTo(ex,ey);
+			process(new Point(width-sx,sy),new Point(width-ex,ey));
+			process(start,new Point(ex,ey));
 			break;
 		case "2p":
-			can.moveTo(sx,height-sy);
-			can.lineTo(ex,height-ey);
+			process(new Point(sx,height-sy),new Point(ex,height-ey));
 		case "1":
-			can.moveTo(sx,sy);
-			can.lineTo(ex,ey);
+			process(start,new Point(ex,ey));
+			break;
+		case "2x":
+			process(start,new Point(ex,ey));
+			process(r(start,1,0),re(ex,ey,1,0));
+			break;
+		case "2y":
+			process(start,new Point(ex,ey));
+			process(re(sx,sy,-1,height),re(ex,ey,-1,height));
+			break;
+		case "4xy":
+			process(start,new Point(ex,ey));
+			process(r(start,1,0),re(ex,ey,1,0));
+			process(re(sx,sy,-1,height),re(ex,ey,-1,height));
+			process(r(r(start,-1,height),1,0),r(r(new Point(ex,ey),-1,height),1,0));
 	}
-	can.stroke();
 	start=new Point(e.pageX,e.pageY);
 }
 
@@ -190,7 +183,7 @@ document.getElementById("canvas").onmouseleave=function(){
 
 function process(start,end){
 	var s;
-	switch(shape){
+	if(pen=="1")switch(shape){
 		case "0":
 			s=new Circle(start,dist(start,end));
 			s.draw();
@@ -210,6 +203,12 @@ function process(start,end){
 			s=new Diamond(start,end);
 			s.draw();
 			break;
+	}
+	else if(pen=="2"||pen=="0"){
+		can.beginPath();
+		can.moveTo(start.x,start.y);
+		can.lineTo(end.x,end.y);
+		can.stroke();
 	}
 }
 
@@ -313,13 +312,13 @@ $("#pen").change(function(){
 $("#s").hide();
 
 height=document.documentElement.clientHeight;
-width=document.documentElement.clientWidth;
+width=height;
 document.getElementById("canvas").height=height;
 document.getElementById("canvas").width=width;
 
 window.onresize=function(){
 	height=document.documentElement.clientHeight;
-	width=document.documentElement.clientWidth;
+	width=height;
 	document.getElementById("canvas").height=height;
 	document.getElementById("canvas").width=width;
 };
