@@ -16,7 +16,7 @@ function toNeat(a,b){
 
 
 
-var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0";
+var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0",rotate=1;
 const can=document.getElementById("canvas").getContext("2d");
 can.fillStyle="#000";
 can.strokeStyle="#000";
@@ -181,7 +181,19 @@ document.getElementById("canvas").onmouseleave=function(){
 	start=null;
 }
 
+function spin(p,a){
+	var ox=width/2,oy=height/2,px=p.x,py=p.y;
+	a*=2*Math.PI/360;
+	return new Point((px-ox)*Math.cos(a)-(py-oy)*Math.sin(a)+ox,(px-ox)*Math.sin(a)+(py-oy)*Math.cos(a)+oy);
+}
+
 function process(start,end){
+	for(var i=0;i<360;i+=360/rotate){
+		pro(spin(start,i),spin(end,i));
+	}
+}
+
+function pro(start,end){
 	var s;
 	if(pen=="1")switch(shape){
 		case "0":
@@ -232,6 +244,10 @@ $("#fill").change(function(){
 
 $("#reflect").change(function(){
 	reflect=$("#reflect").val();
+});
+
+$("#rotate").change(function(){
+	rotate=$("#rotate").val();
 });
 
 $("#border").change(function(){
