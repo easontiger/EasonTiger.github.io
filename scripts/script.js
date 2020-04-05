@@ -98,6 +98,7 @@ class polygon{
 		for(var i=0;i<360;i+=360/side){
 			can.lineTo(spin(this.s,i,this.t).x,spin(this.s,i,this.t).y);
 		}
+		can.closePath();
 		can.stroke();
 		if(fill)can.fill();
 	}
