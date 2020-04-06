@@ -1,12 +1,12 @@
 class Point{
-    constructor(x,y){
-        this.x=x;
-        this.y=y;
-    }
+	constructor(x,y){
+		this.x=x;
+		this.y=y;
+	}
 }
 
 function dist(a,b){
-    return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
+	return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
 }
 
 function toNeat(a,b){
@@ -22,24 +22,24 @@ can.fillStyle="#000";
 can.strokeStyle="#000";
 
 class Circle{
-    constructor(o,r){
-        this.o=o;
-        this.r=r;
-    }
-    draw(){
-        can.beginPath();
-        can.arc(this.o.x,this.o.y,this.r,0,2*Math.PI);
+	constructor(o,r){
+		this.o=o;
+		this.r=r;
+	}
+	draw(){
+		can.beginPath();
+		can.arc(this.o.x,this.o.y,this.r,0,2*Math.PI);
 		if(fill)can.fill();
 		can.stroke();
 	}
 }
 
 class Rect{
-    constructor(a,b){
-        this.a=a;
-        this.b=b;
-    }
-    draw(){
+	constructor(a,b){
+		this.a=a;
+		this.b=b;
+	}
+	draw(){
 		if(fill)can.fillRect(Math.min(this.a.x,this.b.x),Math.min(this.a.y,this.b.y),Math.abs(this.a.x-this.b.x),Math.abs(this.a.y-this.b.y));
 		else{
 			can.moveTo(this.a.x,this.a.y);
@@ -53,9 +53,9 @@ class Rect{
 }
 
 class RT{
-    constructor(a,b){
-        this.a=a;
-        this.b=b;
+	constructor(a,b){
+		this.a=a;
+		this.b=b;
 	}
 	draw(){
 		can.beginPath();
@@ -123,7 +123,7 @@ function r(p,k,b){
 }
 
 document.getElementById("canvas").onmouseup=function(e){
-    if(start==null||pen=="0"){
+	if(start==null||pen=="0"){
 		start=null;
 		return;
 	}
@@ -251,7 +251,7 @@ $("#down").html("<b>download<b>");
 
 $("#clear").click(function(){
 	fs=can.fillStyle;
-    document.getElementById("canvas").getContext("2d").fillStyle="#fff";
+	document.getElementById("canvas").getContext("2d").fillStyle="#fff";
 	document.getElementById("canvas").getContext("2d").fillRect(0,0,width,height);
 	can.fillStyle=fs;
 });

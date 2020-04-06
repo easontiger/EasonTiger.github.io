@@ -1,56 +1,56 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <script src="https://code.jquery.com/jquery-3.1.1.js"></script>
-    </head>
-    <body>
-        <canvas id="canvas" width="1500"></canvas>
-        <br>
-        <b>color:</b>
-        <input type="color" id="color"><br>
-        <b>pen:</b>
-        <select id="pen">
-            <option value="0">pen</option>
-            <option value="2">line</option>
-            <option value="1">shape</option>
+	<head>
+		<script src="https://code.jquery.com/jquery-3.1.1.js"></script>
+	</head>
+	<body>
+		<canvas id="canvas" width="1500"></canvas>
+		<br>
+		<b>color:</b>
+		<input type="color" id="color"><br>
+		<b>pen:</b>
+		<select id="pen">
+			<option value="0">pen</option>
+			<option value="2">line</option>
+			<option value="1">shape</option>
 		</select>
-        <div id="s">
-            <b>shape:</b>
-            <select id="shape">
-                <option value="0">circle</option>
-                <option value="1">rectangle</option>
-                <option value="2">right triangle</option>
-                <option value="3">diamond</option>
-                <option value="4">regular polygon</option>
-            </select>
-        <div id="side"><b>side:</b><input type="text" size="1" value="3" id="sides"></div>
-        <b>fill?</b>
-        <select id="fill">
-            <option value="0">fill</option>
-            <option value="1">side</option>
-        </select>
+		<div id="s">
+			<b>shape:</b>
+			<select id="shape">
+				<option value="0">circle</option>
+				<option value="1">rectangle</option>
+				<option value="2">right triangle</option>
+				<option value="3">diamond</option>
+				<option value="4">regular polygon</option>
+			</select>
+		<div id="side"><b>side:</b><input type="text" size="1" value="3" id="sides"></div>
+		<b>fill?</b>
+		<select id="fill">
+			<option value="0">fill</option>
+			<option value="1">side</option>
+		</select>
 		</div>
 		<div>
-        <b>border size:</b>
+		<b>border size:</b>
 		<input type="text" id="border" value="1" size="1"><b>px</b>
 		</div>
 		<button id="down"></button><b>as:</b>
 		<input type="text" id="filename" value="a" size="1">.png
 		<br>
-        <button id="clear"></button>
+		<button id="clear"></button>
 		<br>
 		<b>reflect</b>
-        <select id="reflect">
-            <option value="1">1x</option>
-            <option value="2v">2x(vertical)</option>
-            <option value="2p">2x(parallel)</option>
-            <option value="2x">2x(y=x)</option>
-            <option value="2y">2x(y=-x)</option>
-            <option value="4pv">4x(p+v)</option>
-            <option value="4xy">4x(y=-x/x)</option>
-        </select><br>
+		<select id="reflect">
+			<option value="1">1x</option>
+			<option value="2v">2x(vertical)</option>
+			<option value="2p">2x(parallel)</option>
+			<option value="2x">2x(y=x)</option>
+			<option value="2y">2x(y=-x)</option>
+			<option value="4pv">4x(p+v)</option>
+			<option value="4xy">4x(y=-x/x)</option>
+		</select><br>
 		<b>rotate</b><input type="text" id="rotate" size="1" value="1">x
-        <p id="warning"></p>
-        <script src="scripts/script.js"></script>
-    </body>
+		<p id="warning"></p>
+		<script src="scripts/script.js"></script>
+	</body>
 </html>
