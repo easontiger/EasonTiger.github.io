@@ -20,7 +20,6 @@ var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0",rotate=1,sid
 const can=document.getElementById("canvas").getContext("2d");
 can.fillStyle="#000";
 can.strokeStyle="#000";
-var width=1500,height=1000;
 
 class Circle{
     constructor(o,r){
@@ -363,8 +362,8 @@ $("#pen").change(function(){
 $("#s").hide();
 $("#side").hide();
 
-height=document.documentElement.clientHeight;
-width=document.documentElement.clientWidth;
+var height=document.documentElement.clientHeight;
+var width=document.documentElement.clientWidth;
 document.getElementById("canvas").height=height;
 document.getElementById("canvas").width=width;
 
