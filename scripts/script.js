@@ -86,6 +86,25 @@ class Diamond{
 	}
 }
 
+<<<<<<< HEAD
+=======
+class polygon{
+	constructor(s,t){
+		this.s=s;
+		this.t=t;
+	}
+	draw(){
+		can.beginPath();
+		can.moveTo(this.s.x,this.s.y);
+		for(var i=0;i<360;i+=360/side){
+			can.lineTo(spin(this.s,i,this.t).x,spin(this.s,i,this.t).y);
+		}
+		can.stroke();
+		if(fill)can.fill();
+	}
+}
+
+>>>>>>> parent of a22e707... update
 $("#color").change(function(){
 	can.fillStyle=$("#color").val();
 	can.strokeStyle=$("#color").val();
