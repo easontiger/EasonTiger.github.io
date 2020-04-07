@@ -14,8 +14,6 @@ function toNeat(a,b){
 	return new Point(a.x+a.y-b.y,b.y);
 }
 
-
-
 var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0",rotate=1,side=3;
 const can=document.getElementById("canvas").getContext("2d");
 can.fillStyle="#000";
