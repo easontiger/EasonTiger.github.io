@@ -350,7 +350,7 @@ $("#pen").change(function(){
 $("#s").hide();
 
 height=document.documentElement.clientHeight;
-width=height;
+width=document.documentElement.clientWidth;
 document.getElementById("canvas").height=height;
 document.getElementById("canvas").width=width;
 
