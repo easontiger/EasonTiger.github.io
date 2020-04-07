@@ -86,8 +86,6 @@ class Diamond{
 	}
 }
 
-<<<<<<< HEAD
-=======
 class polygon{
 	constructor(s,t){
 		this.s=s;
@@ -104,7 +102,6 @@ class polygon{
 	}
 }
 
->>>>>>> parent of a22e707... update
 $("#color").change(function(){
 	can.fillStyle=$("#color").val();
 	can.strokeStyle=$("#color").val();
@@ -352,8 +349,8 @@ $("#pen").change(function(){
 
 $("#s").hide();
 
-var height=document.documentElement.clientHeight;
-var width=document.documentElement.clientWidth;
+height=document.documentElement.clientHeight;
+width=height;
 document.getElementById("canvas").height=height;
 document.getElementById("canvas").width=width;
 
