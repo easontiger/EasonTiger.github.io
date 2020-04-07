@@ -14,9 +14,7 @@ function toNeat(a,b){
 	return new Point(a.x+a.y-b.y,b.y);
 }
 
-
-
-var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0",rotate=1;
+var shape="0",fill=true,reflect="1",neat=false,filename="a",pen="0",rotate=1,side=3;
 const can=document.getElementById("canvas").getContext("2d");
 can.fillStyle="#000";
 can.strokeStyle="#000";
@@ -97,6 +95,7 @@ class polygon{
 		for(var i=0;i<360;i+=360/side){
 			can.lineTo(spin(this.s,i,this.t).x,spin(this.s,i,this.t).y);
 		}
+		can.closePath();
 		can.stroke();
 		if(fill)can.fill();
 	}
@@ -230,6 +229,10 @@ function pro(start,end){
 			s=new Diamond(start,end);
 			s.draw();
 			break;
+		case "4":
+			s=new polygon(start,end);
+			s.draw();
+			break;
 	}
 	else if(pen=="2"||pen=="0"){
 		can.beginPath();
@@ -251,6 +254,11 @@ $("#clear").click(function(){
 
 $("#shape").change(function(){
 	shape=$("#shape").val();
+	if(shape!="4"){
+		$("#side").hide();
+	}else{
+		$("#side").show();
+	}
 });
 
 $("#fill").change(function(){
@@ -264,18 +272,18 @@ $("#reflect").change(function(){
 $("#rotate").change(function(){
 	var ro=$("#rotate").val();
 	var num=/^[0-9]+$/;
-	if(num.test(ro)){
+	if(num.test(ro)&&ro>=1){
 		rotate=ro;
 	}else{
 		$("#warning").html("<font color=\"#e00\"><b>Invalid input for rotate number!</b></font>");
-		$("#rotate").val(ro);
+		$("#rotate").val(rotate);
 	}
 });
 
 $("#border").change(function(){
 	var width=$("#border").val();
 	var num=/^[0-9]+$/;
-	if(num.test(width)){
+	if(num.test(width)&&width>=1){
 		can.lineWidth=width;
 	}else{
 		$("#warning").html("<font color=\"#e00\"><b>Invalid input for line width!</b></font>");
