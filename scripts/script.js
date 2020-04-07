@@ -175,17 +175,17 @@ document.getElementById("canvas").onmousemove=function(e){
 			break;
 		case "2x":
 			process(start,new Point(ex,ey));
-			process(r(start,height/width,0),re(ex,ey,height/width,0));
+			process(r(start,1,0),re(ex,ey,1,0));
 			break;
 		case "2y":
 			process(start,new Point(ex,ey));
-			process(re(sx,sy,-1*height/width,height),re(ex,ey,-1*height/width,height));
+			process(re(sx,sy,-1,height),re(ex,ey,-1,height));
 			break;
 		case "4xy":
 			process(start,new Point(ex,ey));
-			process(r(start,height/width,0),re(ex,ey,height/width,0));
-			process(re(sx,sy,-1*height/width,height),re(ex,ey,-1*height/width,height));
-			process(r(r(start,-1*height/width,height),height/width,0),r(r(new Point(ex,ey),-1*height/width,height),height/width,0));
+			process(r(start,1,0),re(ex,ey,1,0));
+			process(re(sx,sy,-1,height),re(ex,ey,-1,height));
+			process(r(r(start,-1,height),1,0),r(r(new Point(ex,ey),-1,height),1,0));
 	}
 	start=new Point(e.pageX,e.pageY);
 }
@@ -367,7 +367,7 @@ document.getElementById("canvas").width=width;
 
 window.onresize=function(){
 	height=document.documentElement.clientHeight;
-	width=document.documentElement.clientWidth;
+	width=height;
 	document.getElementById("canvas").height=height;
 	document.getElementById("canvas").width=width;
 };
