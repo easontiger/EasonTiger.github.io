@@ -195,17 +195,15 @@ document.getElementById("canvas").onmouseleave=function(){
 	start=null;
 }
 
-function spin(p,a,o){
-	var ox=o.x,oy=o.y,px=p.x,py=p.y;
+function spin(p,a){
+	var ox=width/2,oy=height/2,px=p.x,py=p.y;
 	a*=2*Math.PI/360;
 	return new Point((px-ox)*Math.cos(a)-(py-oy)*Math.sin(a)+ox,(px-ox)*Math.sin(a)+(py-oy)*Math.cos(a)+oy);
 }
 
-var o=new Point(width/2,height/2);
-
 function process(start,end){
 	for(var i=0;i<360;i+=360/rotate){
-		pro(spin(start,i,o),spin(end,i,o));
+		pro(spin(start,i),spin(end,i));
 	}
 }
 
@@ -358,10 +356,9 @@ $("#pen").change(function(){
 });
 
 $("#s").hide();
-$("#side").hide();
 
-var height=document.documentElement.clientHeight;
-var width=document.documentElement.clientWidth;
+height=document.documentElement.clientHeight;
+width=document.documentElement.clientWidth;
 document.getElementById("canvas").height=height;
 document.getElementById("canvas").width=width;
 
@@ -371,14 +368,3 @@ window.onresize=function(){
 	document.getElementById("canvas").height=height;
 	document.getElementById("canvas").width=width;
 };
-
-$("#sides").change(function(){
-	var s=parseInt($("#sides").val());
-	var num=/^[0-9]+$/;
-	if(num.test(s)&&s>=3){
-		side=s;
-	}else{
-		$("#warning").html("<font color=\"#e00\"><b>Invalid input for line width!</b></font>");
-		$("#sides").val(side);
-	}
-});
