@@ -195,15 +195,16 @@ document.getElementById("canvas").onmouseleave=function(){
 	start=null;
 }
 
-function spin(p,a){
-	var ox=width/2,oy=height/2,px=p.x,py=p.y;
+function spin(p,a,o){
+	var ox=o.x/2,oy=o.y/2,px=p.x,py=p.y;
 	a*=2*Math.PI/360;
+	console.log(o);
 	return new Point((px-ox)*Math.cos(a)-(py-oy)*Math.sin(a)+ox,(px-ox)*Math.sin(a)+(py-oy)*Math.cos(a)+oy);
 }
 
 function process(start,end){
 	for(var i=0;i<360;i+=360/rotate){
-		pro(spin(start,i),spin(end,i));
+		pro(spin(start,i,o),spin(end,i,o));
 	}
 }
 
@@ -357,14 +358,16 @@ $("#pen").change(function(){
 
 $("#s").hide();
 
-height=document.documentElement.clientHeight;
-width=document.documentElement.clientWidth;
+var height=document.documentElement.clientHeight;
+var width=document.documentElement.clientWidth;
+var o=new Point(width/2,height/2);
 document.getElementById("canvas").height=height;
 document.getElementById("canvas").width=width;
 
 window.onresize=function(){
 	height=document.documentElement.clientHeight;
 	width=document.documentElement.clientWidth;
+	o=new Point(width/2,height/2);
 	document.getElementById("canvas").height=height;
 	document.getElementById("canvas").width=width;
 };
