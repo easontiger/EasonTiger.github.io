@@ -1089,25 +1089,32 @@ function _event(){
 			_cmd_="a "+(ids[1]?ids[1]:"");
 			return;
 		}
-													});
-														$(".creature").css({"background-color":"burlywood","font-size":"9.6px"});
-	$(".unable").on("touchstart",function(e){
-		if(parseInt(e.currentTarget.id[0])==parseInt(id))
-			if(e.currentTarget.id[1]){_cmd_="a "+e.currentTarget.id.substr(1);}
-			else _cmd_="a ";
-		else if(!e.currentTarget.id[1])_cmd_="e ";
 	});
-	$(".unable").on("touchend",function(e){
-		if(_cmd_[0]=="a"){
-			if(parseInt(e.currentTarget.id[0])!=parseInt(id)){
-				if(e.currentTarget.id[1])_cmd_+=" "+e.currentTarget.id.substr(1);
-				else _cmd_+=" ";
-			}
+	$(".creature").css({"background-color":"burlywood","font-size":"9.6px"});
+	$(".unable").on("touchstart",function(e){
+		var ids=e.currentTarget.id;
+		if(_cmd_==""&&ids==(id==1?"2":"1")){
+			command("e");
+			repaint(),_event(),_cmd_="";
+			return;
 		}
-		else{
-			if(e.currentTarget.id[1]){
-				_cmd_+=" "+(parseInt(e.currentTarget.id[0])-1).toString()+" "+e.currentTarget.id.substr(1);
-			}else _cmd_+=" "+(parseInt(e.currentTarget.id[0])-1).toString();
+		if(_cmd_[0]=="a"&&ids[0]==(id==1?"2":"1")){
+			if(ids[1]==undefined)command(_cmd_+" ");
+			else command(_cmd_+" "+ids[1])
+			_cmd_="";
+			repaint(),_event(),_cmd_="";
+			return;
+		}
+		var cmd=_cmd_.split(" ");
+		if(cmd[0]=="skill"||cmd[0]=="u"){
+			command(_cmd_+" "+(parseInt(ids[0])-1).toString()+(ids[1]?" "+ids[1]:""));
+			_cmd_=""
+			repaint(),_event(),_cmd_="";
+			return;
+		}
+		if(ids[0]==id.toString()){
+			_cmd_="a "+(ids[1]?ids[1]:"");
+			return;
 		}
 	});
 	$("div").css("-webkit-user-select","none");
@@ -1467,7 +1474,7 @@ function command(cmd_){
 								return;
 				}
 				alert("Unknown syntax!");
-			}
+}
 			p2.ma = 0;
 			p2.m = 0;
 			var d = "";
