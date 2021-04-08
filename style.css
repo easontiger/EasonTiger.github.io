@@ -1,0 +1,52 @@
+.creature{
+	background-color: burlywood;
+	font-size: 9.6px;
+}
+.card{
+	background-color: rgba(100,149,237,10);
+	font-size: 9.6px;
+}
+div[rare="2"]{
+	background-color: #ffa500;
+	font-size: 9.6px;
+}
+.unable{
+	opacity: 0.3;
+	background-color: burlywood;
+	font-size: 9.6px;
+}
+.unusable{
+	opacity: 0.3;
+	font-size: 9.6px;
+}
+.attr{
+	color: black;
+	font-weight: bolder;
+	opacity: inherit;
+}
+.cname{
+	color: aquamarine;
+	font-weight: bold;
+}
+.cn{
+	color: blueviolet;
+	font-weight: bold;
+}
+.warn{
+	color: red;
+}
+.mn{
+	color: mediumblue;
+	font-weight: bold;
+}
+.id{
+	color: chartreuse;
+	font-size: 3;
+}
+.frozen{
+	color: lightblue;
+}
+div[can="true"]{
+	font-size: 9.6px;
+	background-color: rgba(135,206,250,90);
+}
