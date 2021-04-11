@@ -13,8 +13,9 @@
 		<div style="text-align: center;position: absolute;left: 170px;top: 175px;"><input type="button" id="toggle" style="display: none;font-weight: bolder;" value="Start turn"></div>
 		<button id="set">back</button>
 		<div id="back" style="position: absolute;background-color:yellowgreen;display: none;">
-			<button ontouchstart="p1.ma=p1.m=p2.m=p2.ma=Infinity;repaint();_event();">Infinity magic</button><br>
-			<button ontouchstart="ald=!ald;">All legend</button>
+			<button onclick="p1.ma=p1.m=p2.m=p2.ma=Infinity;repaint();_event();">Infinity magic</button><br>
+			<button onclick="ald=!ald;">All legend</button><br>
+			<button onclick="newG()">New Game</button>
 			<input type="text" id="call">p1:<input id="di1" type="radio" name="di" value="1" checked="true">p2:<input type="radio" name="di" value="2"><button onclick="
 			var px=document.getElementById('di1').checked?p1:p2;
 			try{
@@ -44,12 +45,12 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-04-03 21:16:43
+ * @Last Modified time: 2021-04-11 11:24:26
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
     "gravity", "drugI", "clone", "sniper", "drugII", "snake", "guard", "poisonous", "piercing", "kill", "pain", "spill", "mind", "blast", "true-shield", "destroy", "poison", "defense",
-    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp"];
+    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat"];
 var cmd, ald = false;
 var range;
 (function (range) {
@@ -250,6 +251,7 @@ var Creature = /** @class */ (function () {
         this.hp = hs;
         this.status = "正常";
         this.max_hp = hs;
+        this.revive = (!feature.has("revive") ? 0 : feature.get("revive"));
         this.building = (!feature.has("build") ? false : feature.get("build"));
         this.atn = (!feature.has("atn") ? 1 : feature.get("atn"));
         this.shield = (!feature.has("shield") ? 0 : feature.get("shield"));
@@ -442,7 +444,8 @@ function dict(name) {
         case "skeleton":
             var m = new map();
             m.set("rare", x);
-            return new Creature(0, 1, new damage(1), 1, "骷髅", m);
+            m.set("revive", (rarity.LEGENDARY == x ? 2 : 1));
+            return new Creature(0, 1, new damage(1), 1, "骷髅", m, "复生(" + m.get("revive") + ")");
         case "s-slime":
             var m = new map();
             m.set("rare", x);
@@ -467,7 +470,7 @@ function dict(name) {
             m.set("atn", 4);
             m.set("range", 1);
             m.set("build", true);
-            return new Creature(0, 6, new damage(1), 10, "X连弩", m, "超级风怒;远程");
+            return new Creature(0, 6, new damage(1), 10, "X连弩", m, "超级风怒;远程;建筑");
         case "fetch": return new Magic(0, 3, "奥术智慧", "抓2张牌", function () {
             var p = ((id == 1) ? p1 : p2);
             var c = new_card(p);
@@ -677,6 +680,7 @@ function dict(name) {
                 }
                 if (pr.deck[n].taunt)
                     pr.taunt--;
+                pr.deck[n].death.run(pr.deck[n]);
                 var m = new map();
                 m.set("rare", x);
                 pr.deck[n] = new Creature(0, 1, new damage(1), 1, "羊", m);
@@ -879,6 +883,7 @@ function dict(name) {
                     d.p = 1;
                 var c1 = new Creature(0, 4, d, 1, "克隆的" + pr.deck[n].c_name, m);
                 c1.id = id;
+                c1.appear = c.appear;
                 c1.std_at = c.std_at;
                 c1.std_ated = c.std_ated;
                 c1.can_t = c.can_t;
@@ -1238,13 +1243,26 @@ function dict(name) {
             };
             ent(a);
             return a;
-        case "ma-exp": return new Magic(0, 3, "魔爆术", "对每个敌方生物造成1+点魔法伤害", function () {
-            var pr = ((id == 2) ? p1 : p2);
-            var p = ((id == 1) ? p1 : p2);
-            pr.deck.forEach(function (e) { harm(e, new damage(0, 1 + p.ms)); });
-            clean(pr);
-            return true;
-        }, x);
+        case "ma-exp":
+            return new Magic(0, 3, "魔爆术", "对每个敌方生物造成1+点魔法伤害", function () {
+                var pr = ((id == 2) ? p1 : p2);
+                var p = ((id == 1) ? p1 : p2);
+                pr.deck.forEach(function (e) { harm(e, new damage(0, 1 + p.ms)); });
+                clean(pr);
+                return true;
+            }, x);
+        case "b-cat":
+            var m = new map();
+            m.set("rare", x);
+            m.set("revive", 8);
+            var a = new Creature(0, 5, new damage(1), 1, "黑猫", m, "复生(8),法强+1", "法强+1");
+            a.appear = function () {
+                var p = ((id == 1) ? p1 : p2);
+                p.ms++;
+                return true;
+            };
+            a.death = new eventlist([function (c) { var p = ((c.id == 1) ? p1 : p2); p.ms--; }]);
+            return a;
     }
     return null;
 }
@@ -1292,6 +1310,7 @@ function attr(c) {
     add(c.defrost, "解冻目标");
     add(c.hide, "隐匿");
     add(c.sacred_shield > 0, "圣盾(" + c.sacred_shield.toString() + ")");
+    add(c.revive > 0, "复生(" + c.revive.toString() + ")");
     add(c.critical != 0, "暴击(" + ((c.critical * 100).toString()) + ")");
     return s;
 }
@@ -1469,7 +1488,15 @@ function isInt(str) {
     return num.test(str);
 }
 function alive(c) {
-    return c.alive && c.poisoned < 3 && c.hp > 0;
+    var a = c.alive && c.poisoned < 3 && c.hp > 0;
+    if (!a && c.revive > 0 && c.max_hp > 0) {
+        c.revive--;
+        c.hp = 1;
+        cure(c, 0);
+        c.alive = true;
+        return true;
+    }
+    return a;
 }
 function clean(p) {
     for (var id = 0; id < p.deck.length; id++)
@@ -1604,7 +1631,7 @@ function to_str(p) {
     for (var i in p.deck) {
         if (p.deck[i].hide && p.id != id)
             continue;
-        temp.appendChild(str(p.deck[i], (!(p.taunt > 0 && !p.deck[i].taunt) && !p.deck[i].hide), p.id.toString() + i, p.deck[i].atl != 0));
+        temp.appendChild(str(p.deck[i], (!(p.taunt > 0 && !p.deck[i].taunt) && !p.deck[i].hide), p.id.toString() + (i.length == 2 ? "" : "0") + i, p.deck[i].atl != 0));
     }
     temp.appendChild(br());
     temp.appendChild(br());
@@ -1615,7 +1642,7 @@ function to_str(p) {
         t.className = "id";
         t.innerText = i.toString() + ":";
         temp.appendChild(t);
-        temp.appendChild(s(p.hand[i], p.hand[i].value.ma <= p.m, p.id.toString() + i));
+        temp.appendChild(s(p.hand[i], p.hand[i].value.ma <= p.m, p.id.toString() + (i.length == 2 ? "" : "0") + i));
     }
     return temp;
 }
@@ -1646,8 +1673,8 @@ function _event(){
 	$(".card").on("click",function(e){
 		var p=((id==1)?p1:p2);
 		if(parseInt(e.currentTarget.id[0])==parseInt(id))
-			if(p.hand[e.currentTarget.id[1]].value.attr==0){
-				var num=parseInt(e.currentTarget.id[1]);
+			if(p.hand[parseInt(e.currentTarget.id.slice(1))].value.attr==0){
+				var num=parseInt(e.currentTarget.id.slice(1));
 				if (num < 0 || num >= p.hand.length) return;
 				if (p.m < p.hand[num].value.ma) {
 					alert("There isn't enough magic");
@@ -1679,7 +1706,7 @@ function _event(){
 				_event();
 				return;
 			}else{
-				_cmd_="u "+e.currentTarget.id[1];
+				_cmd_="u "+e.currentTarget.id.slice(1);
 			}
 	});
 	$(".creature").on("click",function(e){
@@ -1691,20 +1718,20 @@ function _event(){
 		}
 		if(_cmd_[0]=="a"&&ids[0]==(id==1?"2":"1")){
 			if(ids[1]==undefined)command(_cmd_+" ");
-			else command(_cmd_+" "+ids[1])
+			else command(_cmd_+" "+ids.slice(1))
 			_cmd_="";
 			repaint(),_event(),_cmd_="";
 			return;
 		}
 		var cmd=_cmd_.split(" ");
 		if(cmd[0]=="skill"||cmd[0]=="u"){
-			command(_cmd_+" "+(parseInt(ids[0])-1).toString()+(ids[1]?" "+ids[1]:""));
+			command(_cmd_+" "+(parseInt(ids[0])-1).toString()+(ids[1]?" "+ids.slice(1):""));
 			_cmd_=""
 			repaint(),_event(),_cmd_="";
 			return;
 		}
 		if(ids[0]==id.toString()){
-			_cmd_="a "+(ids[1]?ids[1]:"");
+			_cmd_="a "+(ids[1]?ids.slice(1):"");
 			return;
 		}
 	});
@@ -1717,20 +1744,20 @@ function _event(){
 		}
 		if(_cmd_[0]=="a"&&ids[0]==(id==1?"2":"1")){
 			if(ids[1]==undefined)command(_cmd_+" ");
-			else command(_cmd_+" "+ids[1])
+			else command(_cmd_+" "+ids.slice(1));
 			_cmd_="";
 			repaint(),_event(),_cmd_="";
 			return;
 		}
 		var cmd=_cmd_.split(" ");
 		if(cmd[0]=="skill"||cmd[0]=="u"){
-			command(_cmd_+" "+(parseInt(ids[0])-1).toString()+(ids[1]?" "+ids[1]:""));
+			command(_cmd_+" "+(parseInt(ids[0])-1).toString()+(ids[1]?" "+ids.slice(1):""));
 			_cmd_=""
 			repaint(),_event(),_cmd_="";
 			return;
 		}
 		if(ids[0]==id.toString()){
-			_cmd_="a "+(ids[1]?ids[1]:"");
+			_cmd_="a "+(ids[1]?ids.slice(1):"");
 			return;
 		}
 	});
@@ -1995,35 +2022,6 @@ function command(cmd_){
 				}
 				alert("Unknown syntax!");
 }
-			p2.ma = 0;
-			p2.m = 0;
-			var d = "";
-			do {
-				d = prompt("Input p1 deck code");
-			} while (isCode(d) == undefined);
-			p1.pile = decode(isCode(d));
-			do {
-				d = prompt("Input p2 deck code");
-			} while (isCode(d) == undefined);
-			p2.pile = decode(isCode(d));
-			do {
-				d = prompt("Input p1 skill name");
-			} while (skill_dict(d) == undefined);
-			d=skill_dict(d);
-			p1.s =d[0];
-			p1.that=d[1];
-			p1.ms=(d[2]?d[2]:0);
-			do {
-				d = prompt("Input p2 skill name");
-			} while (skill_dict(d) == undefined);
-			d=skill_dict(d)
-			p2.s = d[0];
-			p2.that=d[1];
-			p2.ms=(d[2]?d[2]:0);
-			for (var i = 0; i < 4; i++) p2.hand.push(new_card(p2));
-			for (var i = 0; i < 4; i++) p1.hand.push(new_card(p1));
-			p2.hand.push(new Card(dict("m-b")));
-
 			function isCode(str) {
 				if (str == null) return undefined;
 				if (code.has(str)) {
@@ -2039,13 +2037,62 @@ function command(cmd_){
 				return str;
 			}
 			window.onload = function () {
-				$("#p1").html(to_str(p1));
-				$("#p2").html(to_str(p2));
-				_event();
 				$("#p2").css({"float":"right","width":"30%"});
 				$("#p1").css({"float":"left","width":"30%"});
 				document.getElementById("toggle").ontouchstart=function(){$("#toggle").hide();$("#p1").show(500);$("#p2").show(500);}
-			}	</script>
+			}
+			function NewG(){
+				p1=new Player(1),p2=new Player(2);
+				p2.ma=0;
+				p2.m=0;
+				if(document.getElementById("al").checked)ald=true;
+				if(isCode(document.getElementById("p1p").value)==undefined){
+					alert("Invalid deck code for p1!");
+					return;
+				}
+				p1.pile=decode(isCode(document.getElementById("p1p").value));
+				if(isCode(document.getElementById("p2p").value)==undefined){
+					alert("Invalid deck code for p2!");
+					return;
+				}
+				p2.pile=decode(isCode(document.getElementById("p2p").value));
+				var d=skill_dict(document.getElementById("p1s").value);
+				if(d==undefined){
+					alert("Invalid skill for p1!")
+					return;
+				}
+				p1.s=d[0];
+				p1.that=d[1];
+				p1.ms=(d[2]?d[2]:0);
+				d=skill_dict(document.getElementById("p2s").value);
+				if(d==undefined){
+					alert("Invalid skill for p2!")
+					return;
+				}
+				p2.s=d[0];
+				p2.that=d[1];
+				p2.ms=(d[2]?d[2]:0);
+				if(!document.getElementById("ga").checked){
+					for(var i=0;i<4;i++)p2.hand.push(new_card(p2));
+					for(var i=0;i<4;i++)p1.hand.push(new_card(p1));
+				}else{
+					p2.hand=p2.pile;
+					p1.hand=p1.pile;
+					p2.pile=[];
+					p1.pile=[];
+				}
+				p2.hand.push(new Card(dict("m-b")));
+				repaint();_event();
+			}
+			function newG(){
+				$("#p2").html("");
+				var div=document.getElementById("p1");
+				div.innerHTML="p1:skill:<input type='text' id='p1s'><br>pile:<input type='text' id='p1p'><br>\
+				p2:skill:<input type='text' id='p2s'><br>pile:<input type='text' id='p2p'><br>\
+				ald:<input type='checkbox' id='al'>Giveall:<input type='checkbox' id='ga'>\
+				<button onclick='NewG()'>Submit</button>";
+			}
+			newG();	</script>
 		<script>
 			var com=document.getElementById("com");
 			document.getElementById("sub").ontouchstart=function(){
