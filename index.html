@@ -45,7 +45,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-04-16 21:19:22
+ * @Last Modified time: 2021-04-16 21:32:38
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -330,11 +330,11 @@ var Creature = /** @class */ (function () {
             if (x)
                 alert("Critical Hit!");
             var c = (x ? 2 : 1) * para;
-            if (at_ed.sacred_shield > 0) {
+            if (at_ed.sacred_shield > 0 && p) {
                 at_ed.sacred_shield--;
                 p = false;
             }
-            if (at_ed.shield != 0) {
+            if (at_ed.shield != 0 && p) {
                 at_ed.shield = Math.max(0, at_ed.shield - Math.floor(this.at.p * c));
                 p = false;
             }
