@@ -45,7 +45,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-04-11 11:24:26
+ * @Last Modified time: 2021-04-10 20:40:05
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -2087,6 +2087,7 @@ function command(cmd_){
 			function newG(){
 				$("#p2").html("");
 				var div=document.getElementById("p1");
+				ald=false;
 				div.innerHTML="p1:skill:<input type='text' id='p1s'><br>pile:<input type='text' id='p1p'><br>\
 				p2:skill:<input type='text' id='p2s'><br>pile:<input type='text' id='p2p'><br>\
 				ald:<input type='checkbox' id='al'>Giveall:<input type='checkbox' id='ga'>\
