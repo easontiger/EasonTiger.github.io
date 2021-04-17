@@ -45,7 +45,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-04-16 21:32:38
+ * @Last Modified time: 2021-04-17 11:22:32
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -313,7 +313,7 @@ var Creature = /** @class */ (function () {
                 this.alive = false;
             if (this.defrost && (m || p))
                 defrost(this);
-            if (this.poisonous && p)
+            if (this.poisonous && (m || p))
                 poison(at_er);
             if (this.piercing && p)
                 at_er.bleed++;
@@ -2053,6 +2053,7 @@ function command(cmd_){
 				document.getElementById("toggle").ontouchstart=function(){$("#toggle").hide();$("#p1").show(500);$("#p2").show(500);}
 			}
 			function NewG(){
+				id=1;
 				p1=new Player(1),p2=new Player(2);
 				p2.ma=0;
 				p2.m=0;
