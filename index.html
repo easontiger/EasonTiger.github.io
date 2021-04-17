@@ -2068,6 +2068,7 @@ function command(cmd_){
 					return;
 				}
 				p2.pile=decode(isCode(document.getElementById("p2p").value));
+				if(document.getElementById("ref").checked)p2.pile=p1.pile;
 				var d=skill_dict(document.getElementById("p1s").value);
 				if(d==undefined){
 					alert("Invalid skill for p1!")
@@ -2102,7 +2103,7 @@ function command(cmd_){
 				ald=false;
 				div.innerHTML="p1:skill:<input type='text' id='p1s'><br>pile:<input type='text' id='p1p'><br>\
 				p2:skill:<input type='text' id='p2s'><br>pile:<input type='text' id='p2p'><br>\
-				ald:<input type='checkbox' id='al'>Giveall:<input type='checkbox' id='ga'>\
+				ald:<input type='checkbox' id='al'>Giveall:<input type='checkbox' id='ga'>Reflexing Deck:<input type='checkbox' id='ref'><br>\
 				<button onclick='NewG()'>Submit</button>";
 			}
 			newG();	</script>
