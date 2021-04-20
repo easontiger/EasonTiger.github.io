@@ -45,7 +45,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-04-17 11:22:32
+ * @Last Modified time: 2021-04-20 19:12:36
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -160,7 +160,6 @@ function add(c1, c2) {
     c1.at.m += c2.at.m;
     c1.hp += c2.hp;
     c1.atn = Math.max(c1.atn, c2.atn);
-    c1.atl = c1.atn;
     c1.shield += c2.shield;
     c1.sacred_shield += c2.sacred_shield;
     c1.taunt = c1.taunt || c2.taunt;
@@ -1376,7 +1375,7 @@ function skill_dict(name) {
                     return true;
                 }, "小火球", "对目标造成1+点伤害", "法强+1"), new Creature(0, 0, new damage(0, 1), 30, "法师", m), 1];
         case "attacher":
-            return [new Skill(0, 0, function () {
+            return [new Skill(0, 2, function () {
                     var p = ((id == 1) ? p1 : p2);
                     p.hand.forEach(function (e) {
                         if (e.value instanceof Creature)
