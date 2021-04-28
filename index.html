@@ -2067,7 +2067,8 @@ function command(cmd_){
 					return;
 				}
 				p2.pile=decode(isCode(document.getElementById("p2p").value));
-				if(document.getElementById("ref").checked)p2.pile=p1.pile;
+				if(document.getElementById("ref").checked)
+				for(x in p1.deck)p2.deck[x]=p1.deck[x];
 				var d=skill_dict(document.getElementById("p1s").value);
 				if(d==undefined){
 					alert("Invalid skill for p1!")
