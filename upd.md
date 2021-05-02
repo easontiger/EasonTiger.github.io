@@ -18,6 +18,8 @@
 	}
 </style>
 
+<a href="index.html">Back to index</a>
+
 21.4.25
 1. <code>init upd.md</code>
 2. <code>init intro.md</code>
@@ -58,3 +60,5 @@
 	+ <code>name:</code>法术型召唤兽
 	+ <code>attr:</code>$\scriptsize 2/(0+1)/1 $
 	+ <code>special effect:</code><span class='mechanism'>Ms+1</span>
+8. + <code>init upd.html</code>
+   + <code>link index.html to upd.html</code>
