@@ -45,12 +45,13 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-04-20 19:12:36
+ * @Last Modified time: 2021-05-02 15:03:27
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
     "gravity", "drugI", "clone", "sniper", "drugII", "snake", "guard", "poisonous", "piercing", "kill", "pain", "spill", "mind", "blast", "true-shield", "destroy", "poison", "defense",
     "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat"];
+var summon = ["su-base", "su-attack", "su-defense", "su-magic"];
 var cmd, ald = false;
 var range;
 (function (range) {
@@ -166,7 +167,6 @@ function add(c1, c2) {
     c1.poisonous = c1.poisonous || c2.poisonous;
     c1.hide = c1.hide || c2.hide;
     c1.critical = Math.max(c1.critical, c2.critical);
-    c1.rare = Math.max(c1.rare, c2.rare);
     c1.r = Math.max(c1.r, c2.r);
     c1.freezing = c1.freezing || c2.freezing;
     c1.self_destructive = c1.self_destructive || c2.self_destructive;
@@ -255,6 +255,7 @@ var Creature = /** @class */ (function () {
         this.atn = (!feature.has("atn") ? 1 : feature.get("atn"));
         this.shield = (!feature.has("shield") ? 0 : feature.get("shield"));
         this.sacred_shield = (!feature.has("s-shield") ? 0 : feature.get("s-shield"));
+        this.ms = (!feature.has("ms") ? 0 : feature.get("ms"));
         this.taunt = (feature.get("taunt") == 1);
         this.poisonous = (feature.get("poison") == 1);
         this.hide = (feature.get("hide") == 1);
@@ -588,7 +589,7 @@ function dict(name) {
                     var pr = ((tar.id == 2) ? p1 : p2);
                     if (pr.deck.length == 0)
                         return;
-                    var cd = radom_el(pr.deck);
+                    var cd = random_el(pr.deck);
                     buff(cd, new damage(-1), -1);
                     clean(pr);
                 }));
@@ -679,10 +680,11 @@ function dict(name) {
                 }
                 if (pr.deck[n].taunt)
                     pr.taunt--;
-                pr.deck[n].death.run(pr.deck[n]);
+                pr.ms -= pr.deck[n].ms;
                 var m = new map();
                 m.set("rare", x);
                 pr.deck[n] = new Creature(0, 1, new damage(1), 1, "羊", m);
+                pr.deck[n].id = pr.id;
                 return true;
             }, x);
         case "fireball":
@@ -796,7 +798,7 @@ function dict(name) {
         case "rand":
             return new Magic(0, 4, "随机", "将一张随机卡牌置入你的手牌并使它的法力消耗变为0", function () {
                 var p = ((id == 1) ? p1 : p2);
-                var c = new Card(dict(radom_el(card_dict)));
+                var c = new Card(dict(random_el(card_dict)));
                 c.value.ma = 0;
                 p.hand.push(c);
                 return true;
@@ -882,7 +884,6 @@ function dict(name) {
                     d.p = 1;
                 var c1 = new Creature(0, 4, d, 1, "克隆的" + pr.deck[n].c_name, m);
                 c1.id = id;
-                c1.appear = c.appear;
                 c1.std_at = c.std_at;
                 c1.std_ated = c.std_ated;
                 c1.can_t = c.can_t;
@@ -1028,7 +1029,7 @@ function dict(name) {
                     var pr = ((tar.id == 2) ? p1 : p2);
                     if (pr.deck.length == 0)
                         return;
-                    var cd = radom_el(pr.deck);
+                    var cd = random_el(pr.deck);
                     harm(cd, new damage(0, 1));
                     clean(pr);
                 }));
@@ -1254,13 +1255,8 @@ function dict(name) {
             var m = new map();
             m.set("rare", x);
             m.set("revive", 8);
-            var a = new Creature(0, 5, new damage(1), 1, "黑猫", m, "复生(8),法强+1", "法强+1");
-            a.appear = function () {
-                var p = ((id == 1) ? p1 : p2);
-                p.ms++;
-                return true;
-            };
-            a.death = new eventlist([function (c) { var p = ((c.id == 1) ? p1 : p2); p.ms--; }]);
+            m.set("ms", 1);
+            var a = new Creature(0, 5, new damage(1), 1, "黑猫", m, "复生(8),法强+1");
             return a;
         case "hxbs":
             var m = new map();
@@ -1273,6 +1269,25 @@ function dict(name) {
                 a.atl++;
             };
             return a;
+        case "su-base":
+            var m = new map();
+            m.set("rare", x);
+            return new Creature(0, 2, new damage(2), 2, "标准型召唤兽", m);
+        case "su-defense":
+            var m = new map();
+            m.set("taunt", 1);
+            m.set("rare", x);
+            return new Creature(0, 2, new damage(1), 3, "防御型召唤兽", m);
+        case "su-attack":
+            var m = new map();
+            m.set("charge", 1);
+            m.set("rare", x);
+            return new Creature(0, 2, new damage(3), 1, "攻击型召唤兽", m);
+        case "su-magic":
+            var m = new map();
+            m.set("ms", 1);
+            m.set("rare", x);
+            return new Creature(0, 2, new damage(0, 1), 1, "法术型召唤兽", m);
     }
     return null;
 }
@@ -1319,6 +1334,7 @@ function attr(c) {
     add(c.piercing, "穿透");
     add(c.defrost, "解冻目标");
     add(c.hide, "隐匿");
+    add(c.ms > 0, "法强+" + c.ms.toString());
     add(c.sacred_shield > 0, "圣盾(" + c.sacred_shield.toString() + ")");
     add(c.revive > 0, "复生(" + c.revive.toString() + ")");
     add(c.critical != 0, "暴击(" + ((c.critical * 100).toString()) + ")");
@@ -1335,11 +1351,8 @@ function skill_dict(name) {
         case "knight":
             return [new Skill(0, 2, function () {
                     var p = ((id == 1) ? p1 : p2);
-                    if (p.cnt != undefined)
-                        p.cnt++;
-                    else
-                        p.cnt = 1;
-                    call(p, new Creature(0, 1, new damage(1, Math.floor(p.cnt / 3)), 1 + Math.floor(p.cnt / 3), "士兵", new map()));
+                    ++p.x;
+                    call(p, new Creature(0, 1, new damage(1, Math.floor(p.x / 3)), 1 + Math.floor(p.x / 3), "士兵", new map()));
                     return true;
                 }, "召唤", "将一个1/1的士兵置入战场", "每召唤3个士兵,使之后召唤的士兵获得+1/+1"), new Creature(0, 0, new damage(1), 30, "圣骑士", new map())];
         case "magic":
@@ -1421,6 +1434,12 @@ function skill_dict(name) {
                     p.hand.push(c);
                     return true;
                 }, "生命分流", "抓1张牌,对你造成2点伤害"), new Creature(0, 0, new damage(0, 1), 30, "术士", new map())];
+        case "summon":
+            return [new Skill(0, 2, function () {
+                    var p = p_(id);
+                    call(p, dict(random_el(summon)));
+                    return true;
+                }, "召唤", "随机召唤一个召唤兽"), new Creature(0, 0, new damage(0), 30, "召唤师", new map())];
     }
 }
 var Player = /** @class */ (function () {
@@ -1429,6 +1448,7 @@ var Player = /** @class */ (function () {
         m.set("charge", 1);
         this.that = new Creature(0, 0, new damage(1), 50, "英雄", m);
         this.hand = [];
+        this.x = 0;
         this.pile = [];
         this.cnt = 0;
         this.deck = [];
@@ -1448,6 +1468,7 @@ function call(p, c) {
     p.deck.push(c);
     if (c.taunt)
         p.taunt++;
+    p.ms += c.ms;
     return true;
 }
 function new_card(p) {
@@ -1455,7 +1476,7 @@ function new_card(p) {
         p.that.hp -= (++p.cnt);
         return;
     }
-    var c = radom_el(p.pile);
+    var c = random_el(p.pile);
     p.pile.splice(p.pile.indexOf(c), 1);
     return c;
 }
@@ -1493,6 +1514,16 @@ function end_turn(p) {
     clean(p);
 }
 var p1 = new Player(1), p2 = new Player(2), id = 1;
+function p_(x) {
+    if (x instanceof Creature)
+        x = x.id;
+    return (x == 1) ? p1 : p2;
+}
+function pr_(x) {
+    if (x instanceof Creature)
+        x = x.id;
+    return (x == 1) ? p2 : p1;
+}
 function isInt(str) {
     var num = /^[0-9]+$/;
     return num.test(str);
@@ -1515,11 +1546,12 @@ function clean(p) {
                 p.deck[id].death.run(p.deck[id]);
             if (p.deck[id].taunt)
                 p.taunt--;
+            p.ms -= p.deck[id].ms;
             p.deck.splice(id, 1);
             id = -1;
         }
 }
-function radom_el(arr) {
+function random_el(arr) {
     return arr[rand(arr.length - 1)];
 }
 function str(c, a, id, can_at) {
