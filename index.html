@@ -46,13 +46,13 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-05-02 15:03:27
+ * @Last Modified time: 2021-05-03 20:17:39
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
     "gravity", "drugI", "clone", "sniper", "drugII", "snake", "guard", "poisonous", "piercing", "kill", "pain", "spill", "mind", "blast", "true-shield", "destroy", "poison", "defense",
     "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat"];
-var summon = ["su-base", "su-attack", "su-defense", "su-magic"];
+var summon = ["su-base", "su-attack", "su-defense", "su-magic", "su-buff"];
 var cmd, ald = false;
 var range;
 (function (range) {
@@ -252,6 +252,8 @@ var Creature = /** @class */ (function () {
         this.status = "正常";
         this.max_hp = hs;
         this.revive = (!feature.has("revive") ? 0 : feature.get("revive"));
+        this.atb = (!feature.has("atb") ? new damage(0) : feature.get("atb"));
+        this.hpb = (!feature.has("hpb") ? 0 : feature.get("hpb"));
         this.building = (!feature.has("build") ? false : feature.get("build"));
         this.atn = (!feature.has("atn") ? 1 : feature.get("atn"));
         this.shield = (!feature.has("shield") ? 0 : feature.get("shield"));
@@ -407,18 +409,19 @@ function defrost(c) {
     c.hp -= Math.floor(c.frozen / 2);
     c.frozen = 0;
 }
-function buff(c, at, hp) {
+function buff(c, at, hp, n) {
     if (hp === void 0) { hp = 0; }
-    c.at.m += at.m;
-    c.at.p += at.p;
-    c.max_at.m += at.m;
-    c.max_at.p += at.p;
+    if (n === void 0) { n = 1; }
+    c.at.m += at.m * n;
+    c.at.p += at.p * n;
+    c.max_at.m += at.m * n;
+    c.max_at.p += at.p * n;
     c.at.m = Math.max(0, c.at.m);
     c.at.p = Math.max(0, c.at.p);
     c.max_at.m = Math.max(0, c.max_at.m);
     c.max_at.p = Math.max(0, c.max_at.p);
-    c.max_hp += hp;
-    c.hp += hp;
+    c.max_hp += hp * n;
+    c.hp += hp * n;
 }
 function ent(c) {
     c.can_t = true;
@@ -679,13 +682,12 @@ function dict(name) {
                     alert("Index out of range");
                     return false;
                 }
-                if (pr.deck[n].taunt)
-                    pr.taunt--;
-                pr.ms -= pr.deck[n].ms;
+                pr.deck[n].alive = false;
+                pr.deck[n].death = new eventlist();
+                clean(pr);
                 var m = new map();
                 m.set("rare", x);
-                pr.deck[n] = new Creature(0, 1, new damage(1), 1, "羊", m);
-                pr.deck[n].id = pr.id;
+                call(pr, new Creature(0, 1, new damage(1), 1, "羊", m), n);
                 return true;
             }, x);
         case "fireball":
@@ -764,6 +766,7 @@ function dict(name) {
                     poison(pr.deck[n - 1], 1);
                 if (n < pr.deck.length - 1)
                     poison(pr.deck[n + 1], 1);
+                clean(pr);
                 return true;
             }, x);
         case "flame":
@@ -1289,6 +1292,11 @@ function dict(name) {
             m.set("ms", 1);
             m.set("rare", x);
             return new Creature(0, 2, new damage(0, 1), 1, "法术型召唤兽", m);
+        case "su-buff":
+            var m = new map();
+            m.set("atb", new damage(1));
+            m.set("hpb", 1);
+            return new Creature(0, 2, new damage(1), 2, "增益型召唤兽", m);
     }
     return null;
 }
@@ -1339,6 +1347,7 @@ function attr(c) {
     add(c.sacred_shield > 0, "圣盾(" + c.sacred_shield.toString() + ")");
     add(c.revive > 0, "复生(" + c.revive.toString() + ")");
     add(c.critical != 0, "暴击(" + ((c.critical * 100).toString()) + ")");
+    add(c.atb.p > 0 || c.atb.m > 0 || c.hpb > 0, "你的其他生物获得+(" + c.atb.toString() + ")+" + c.hpb.toString());
     return s;
 }
 function skill_dict(name) {
@@ -1450,6 +1459,8 @@ var Player = /** @class */ (function () {
         this.that = new Creature(0, 0, new damage(1), 50, "英雄", m);
         this.hand = [];
         this.x = 0;
+        this.at = new damage(0);
+        this.hp = 0;
         this.pile = [];
         this.cnt = 0;
         this.deck = [];
@@ -1462,14 +1473,23 @@ var Player = /** @class */ (function () {
     }
     return Player;
 }());
-function call(p, c) {
+function call(p, c, n) {
     if (!c.appear())
         return false;
     c.id = p.id;
-    p.deck.push(c);
+    buff(c, p.at, p.hp);
+    for (var i in p.deck)
+        buff(p.deck[i], c.atb, c.hpb);
+    if (n == undefined)
+        p.deck.push(c);
+    else
+        p.deck[n] = c;
     if (c.taunt)
         p.taunt++;
     p.ms += c.ms;
+    p.at.m += c.atb.m;
+    p.at.p += c.atb.p;
+    p.hp += c.hpb;
     return true;
 }
 function new_card(p) {
@@ -1548,6 +1568,12 @@ function clean(p) {
             if (p.deck[id].taunt)
                 p.taunt--;
             p.ms -= p.deck[id].ms;
+            var c = p.deck[id];
+            for (var i in p.deck)
+                buff(p.deck[i], c.atb, c.hpb, -1);
+            p.hp -= c.hpb;
+            p.at.p -= c.atb.p;
+            p.at.m -= c.atb.m;
             p.deck.splice(id, 1);
             id = -1;
         }
@@ -2082,7 +2108,7 @@ function command(cmd_){
 			window.onload = function () {
 				$("#p2").css({"float":"right","width":"30%"});
 				$("#p1").css({"float":"left","width":"30%"});
-				document.getElementById("toggle").ontouchstart=function(){$("#toggle").hide();$("#p1").show(500);$("#p2").show(500);}
+				document.getElementById("toggle").onclick=function(){$("#toggle").hide();$("#p1").show(500);$("#p2").show(500);}
 			}
 			function NewG(){
 				id=1;
@@ -2090,19 +2116,18 @@ function command(cmd_){
 				p2.ma=0;
 				p2.m=0;
 				if(document.getElementById("al").checked)ald=true;
-				if(isCode(document.getElementById("p1p").value)==undefined){
+				if(isCode(p1P=document.getElementById("p1p").value)==undefined){
 					alert("Invalid deck code for p1!");
 					return;
 				}
 				p1.pile=decode(isCode(document.getElementById("p1p").value));
-				if(isCode(document.getElementById("p2p").value)==undefined){
+				if(isCode(p2P=document.getElementById("p2p").value)==undefined){
 					alert("Invalid deck code for p2!");
 					return;
 				}
 				p2.pile=decode(isCode(document.getElementById("p2p").value));
-				if(document.getElementById("ref").checked)
-				for(x in p1.deck)p2.deck[x]=p1.deck[x];
-				var d=skill_dict(document.getElementById("p1s").value);
+				if(REF=document.getElementById("ref").checked)for(x in p1.deck)p2.deck[x]=p1.deck[x];
+				var d=skill_dict(p1S=document.getElementById("p1s").value);
 				if(d==undefined){
 					alert("Invalid skill for p1!")
 					return;
@@ -2110,7 +2135,7 @@ function command(cmd_){
 				p1.s=d[0];
 				p1.that=d[1];
 				p1.ms=(d[2]?d[2]:0);
-				d=skill_dict(document.getElementById("p2s").value);
+				d=skill_dict(p2S=document.getElementById("p2s").value);
 				if(d==undefined){
 					alert("Invalid skill for p2!")
 					return;
@@ -2118,7 +2143,7 @@ function command(cmd_){
 				p2.s=d[0];
 				p2.that=d[1];
 				p2.ms=(d[2]?d[2]:0);
-				if(!document.getElementById("ga").checked){
+				if(!(GA=document.getElementById("ga").checked)){
 					for(var i=0;i<4;i++)p2.hand.push(new_card(p2));
 					for(var i=0;i<4;i++)p1.hand.push(new_card(p1));
 				}else{
@@ -2130,14 +2155,21 @@ function command(cmd_){
 				p2.hand.push(new Card(dict("m-b")));
 				repaint();_event();
 			}
+			var p1S="",p1P="",p2P="",p2S="",GA=false,REF=false;
 			function newG(){
 				$("#p2").html("");
 				var div=document.getElementById("p1");
-				ald=false;
 				div.innerHTML="p1:skill:<input type='text' id='p1s'><br>pile:<input type='text' id='p1p'><br>\
 				p2:skill:<input type='text' id='p2s'><br>pile:<input type='text' id='p2p'><br>\
 				ald:<input type='checkbox' id='al'>Giveall:<input type='checkbox' id='ga'>Reflexing Deck:<input type='checkbox' id='ref'><br>\
 				<button onclick='NewG()'>Submit</button>";
+				document.getElementById("p1s").value=p1S;
+				document.getElementById("p2s").value=p2S;
+				document.getElementById("p1p").value=p1P;
+				document.getElementById("p2p").value=p2P;
+				document.getElementById("al").checked=ald;
+				document.getElementById("ga").checked=GA;
+				document.getElementById("ref").checked=REF;
 			}
 			newG();	</script>
 		<script>
