@@ -46,7 +46,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-05-12 20:15:24
+ * @Last Modified time: 2021-05-13 18:08:54
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -1483,7 +1483,7 @@ function call(p, c, n) {
     if (n == undefined)
         p.deck.push(c);
     else
-        p.deck[n] = c;
+        p.deck.splice(n, 0, c);
     if (c.taunt)
         p.taunt++;
     p.ms += c.ms;
