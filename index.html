@@ -46,12 +46,12 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-05-13 18:08:54
+ * @Last Modified time: 2021-05-14 21:13:19
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
     "gravity", "drugI", "clone", "sniper", "drugII", "snake", "guard", "poisonous", "piercing", "kill", "pain", "spill", "mind", "blast", "true-shield", "destroy", "poison", "defense",
-    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat", "hxbs"];
+    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat", "hxbs", "whip"];
 var summon = ["su-base", "su-attack", "su-defense", "su-magic", "su-buff"];
 var cmd, ald = false;
 var range;
@@ -69,6 +69,14 @@ var rarity;
     rarity[rarity["LEGENDARY"] = 2] = "LEGENDARY";
 })(rarity || (rarity = {}));
 ;
+var Type;
+(function (Type) {
+    Type[Type["null"] = 0] = "null";
+    Type[Type["summon"] = 1] = "summon";
+    Type[Type["building"] = 2] = "building";
+})(Type || (Type = {}));
+;
+var T = ["无", "召唤兽", "建筑"];
 function rand_rare() {
     var x = rand(100);
     if (x < 10)
@@ -254,7 +262,7 @@ var Creature = /** @class */ (function () {
         this.revive = (!feature.has("revive") ? 0 : feature.get("revive"));
         this.atb = (!feature.has("atb") ? new damage(0) : feature.get("atb"));
         this.hpb = (!feature.has("hpb") ? 0 : feature.get("hpb"));
-        this.building = (!feature.has("build") ? false : feature.get("build"));
+        this.type = (!feature.has("type") ? Type["null"] : feature.get("type"));
         this.atn = (!feature.has("atn") ? 1 : feature.get("atn"));
         this.shield = (!feature.has("shield") ? 0 : feature.get("shield"));
         this.sacred_shield = (!feature.has("s-shield") ? 0 : feature.get("s-shield"));
@@ -356,7 +364,7 @@ var Creature = /** @class */ (function () {
                 var pr = ((this.id == 2) ? p1 : p2);
                 at_ed.bleed++;
                 if (at_ed != pr.that)
-                    this.attack(pr.that), this.atl++;
+                    this.std_at(pr.that), this.atl++;
             }
             if (this.defrost && (m || p))
                 defrost(this);
@@ -473,7 +481,7 @@ function dict(name) {
             m.set("rare", x);
             m.set("atn", 4);
             m.set("range", 1);
-            m.set("build", true);
+            m.set("type", Type.building);
             return new Creature(0, 6, new damage(1), 10, "X连弩", m, "超级风怒;远程;建筑");
         case "fetch": return new Magic(0, 3, "奥术智慧", "抓2张牌", function () {
             var p = ((id == 1) ? p1 : p2);
@@ -1177,7 +1185,7 @@ function dict(name) {
             m.set("rare", x);
             var a = new Creature(0, 4, new damage(2), 5, "母体", m, "当完成击杀时," + (rarity.LEGENDARY == x ? "" : "50%概率") + "使目标变为我方僵尸", "当完成击杀时," + (rarity.LEGENDARY == x ? "" : "50%概率") + "使目标变为我方僵尸");
             a.kill = function (tar) {
-                if (tar.building)
+                if (tar.type == Type.building)
                     return;
                 var p = ((this.id == 1) ? p1 : p2);
                 if (rarity.LEGENDARY == this.rare || Math.random() >= 0.5)
@@ -1188,7 +1196,7 @@ function dict(name) {
             var m = new map();
             m.set("rare", x);
             m.set("atn", 0);
-            m.set("build", true);
+            m.set("type", Type.building);
             var a = new Creature(0, 4, new damage(0), 5, "骷髅墓碑", m, "回合结束时，召唤1个骷髅;亡语:召唤3个骷髅", "回合结束时，召唤1个骷髅;亡语:召唤3个骷髅");
             a.end = new eventlist([function (c) {
                     var p = ((c.id == 1) ? p1 : p2);
@@ -1276,27 +1284,58 @@ function dict(name) {
         case "su-base":
             var m = new map();
             m.set("rare", x);
+            m.set("type", Type.summon);
             return new Creature(0, 2, new damage(2), 2, "标准型召唤兽", m);
         case "su-defense":
             var m = new map();
             m.set("taunt", 1);
             m.set("rare", x);
+            m.set("type", Type.summon);
             return new Creature(0, 2, new damage(1), 3, "防御型召唤兽", m);
         case "su-attack":
             var m = new map();
             m.set("charge", 1);
             m.set("rare", x);
+            m.set("type", Type.summon);
             return new Creature(0, 2, new damage(3), 1, "攻击型召唤兽", m);
         case "su-magic":
             var m = new map();
             m.set("ms", 1);
             m.set("rare", x);
+            m.set("type", Type.summon);
             return new Creature(0, 2, new damage(0, 1), 1, "法术型召唤兽", m);
         case "su-buff":
             var m = new map();
             m.set("atb", new damage(1));
             m.set("hpb", 1);
+            m.set("type", Type.summon);
             return new Creature(0, 2, new damage(1), 2, "增益型召唤兽", m);
+        case "whip":
+            return new Magic(1, 1, "鞭策", "对一个单位造成1+点伤害,如果它是召唤兽,使它攻击力+1+", function () {
+                var n = parseInt(cmd[2]);
+                if (n != 1 && n != 0) {
+                    alert("Index out of range");
+                    return false;
+                }
+                var pr = ((n == 0) ? p1 : p2);
+                var p = ((id == 1) ? p1 : p2);
+                if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                    alert("Invalid parameter");
+                    return false;
+                }
+                var c;
+                n = parseInt(cmd[3]);
+                if (n >= pr.deck.length) {
+                    alert("Index out of range");
+                    return false;
+                }
+                c = pr.deck[n];
+                harm(c, new damage(0, 1 + p.ms));
+                if (Type.summon == c.type)
+                    c.at.p += 1 + p.ms;
+                clean(pr);
+                return true;
+            }, x);
     }
     return null;
 }
@@ -1330,7 +1369,6 @@ function attr(c) {
             s += ";";
         s += cb;
     }
-    add(c.building, "建筑");
     add(c.atn == 2, "风怒");
     add(c.atn == 4, "超级风怒");
     add(c.taunt == true, "嘲讽");
@@ -1526,7 +1564,7 @@ function end_turn(p) {
         if (e.poisoned > 0)
             e.hp--;
         e.hp -= e.bleed;
-        if (e.building)
+        if (e.type == Type.building)
             e.hp--;
         e.end.run(e);
     }
@@ -1589,7 +1627,7 @@ function str(c, a, id, can_at) {
     r.setAttribute("rare", c.rare.toString());
     var temp = document.createElement("div");
     temp.className = "cname";
-    temp.innerText = c.c_name + "(" + c.status + ")";
+    temp.innerText = c.c_name + "(" + T[c.type] + ")" + "(" + c.status + ")";
     r.appendChild(temp);
     r.appendChild(document.createTextNode(c.at.toString() + "(" + c.max_at.toString() + ")/" + c.hp.toString() + "(" + c.max_hp + ")" + (c.shield ? "+" + c.shield.toString() : "")));
     r.appendChild(document.createElement("br"));
