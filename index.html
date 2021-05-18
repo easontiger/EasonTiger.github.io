@@ -417,6 +417,13 @@ function defrost(c) {
     c.hp -= Math.floor(c.frozen / 2);
     c.frozen = 0;
 }
+function silence(c, kill) {
+    c.appear = function () { };
+    c.death = new eventlist();
+    c.revive = (kill ? 0 : 1);
+    c.alive = false;
+    clean(p_(c));
+}
 function buff(c, at, hp, n) {
     if (hp === void 0) { hp = 0; }
     if (n === void 0) { n = 1; }
@@ -690,8 +697,7 @@ function dict(name) {
                     alert("Index out of range");
                     return false;
                 }
-                pr.deck[n].alive = false;
-                pr.deck[n].death = new eventlist();
+                silence(pr.deck[n], true);
                 clean(pr);
                 var m = new map();
                 m.set("rare", x);
