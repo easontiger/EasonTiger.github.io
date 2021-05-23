@@ -46,12 +46,12 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-05-14 21:13:19
+ * @Last Modified time: 2021-05-23 11:30:10
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
     "gravity", "drugI", "clone", "sniper", "drugII", "snake", "guard", "poisonous", "piercing", "kill", "pain", "spill", "mind", "blast", "true-shield", "destroy", "poison", "defense",
-    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat", "hxbs", "whip"];
+    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat", "hxbs", "whip", "space"];
 var summon = ["su-base", "su-attack", "su-defense", "su-magic", "su-buff"];
 var cmd, ald = false;
 var range;
@@ -158,9 +158,9 @@ var Skill = /** @class */ (function () {
 }());
 function add(c1, c2) {
     if (c1.status != "正常")
-        c1.toggle();
+        c1.toggle(c1);
     if (c2.status != "正常")
-        c2.toggle();
+        c2.toggle(c2);
     if ((!c1.taunt) && c2.m.has("taunt")) {
         var pr = ((c1.id == 1) ? p1 : p2);
         pr.taunt++;
@@ -417,12 +417,57 @@ function defrost(c) {
     c.hp -= Math.floor(c.frozen / 2);
     c.frozen = 0;
 }
+function _silence(c) {
+    c.alive = false;
+    c.death = new eventlist();
+    c.revive = 0;
+}
 function silence(c, kill) {
     c.appear = function () { };
     c.death = new eventlist();
-    c.revive = (kill ? 0 : 1);
-    c.alive = false;
-    clean(p_(c));
+    c.revive = 0;
+    if (kill) {
+        c.alive = false;
+        clean(p_(c));
+    }
+    var p = p_(c);
+    c.atl = (c.atl > 0 ? 1 : 0);
+    c.atn = 1;
+    c.attack = c.std_at;
+    c.attacked = c.std_ated;
+    if (c.taunt)
+        c.taunt = false, p.taunt--;
+    c.hide = false;
+    c.poisonous = false;
+    c.r = range.GROUND;
+    c.appear = function () { return true; };
+    c.freezing = false;
+    c.self_destructive = false;
+    c.piercing = false;
+    c.defrost = false;
+    c.addictive = false;
+    c.m = new map();
+    c.m.set("rare", c.rare);
+    c.critical = 0;
+    if (c.status != "正常") {
+        c.toggle();
+    }
+    c.can_t = false;
+    c.toggle = function () { };
+    c.const_attr = "";
+    c.harmed = function () { };
+    c.kill = function () { };
+    c.end = new eventlist();
+    for (var i in p.deck)
+        buff(p.deck[i], c.atb, c.hpb, -1);
+    c.atb = new damage(0);
+    c.hpb = 0;
+    p.hp -= c.hpb;
+    p.at.p -= c.atb.p;
+    p.at.m -= c.atb.m;
+    p.ms -= c.ms;
+    c.ms = 0;
+    clean(p);
 }
 function buff(c, at, hp, n) {
     if (hp === void 0) { hp = 0; }
@@ -1317,7 +1362,7 @@ function dict(name) {
             m.set("type", Type.summon);
             return new Creature(0, 2, new damage(1), 2, "增益型召唤兽", m);
         case "whip":
-            return new Magic(1, 1, "鞭策", "对一个单位造成1+点伤害,如果它是召唤兽,使它攻击力+1+", function () {
+            return new Magic(2, 1, "鞭策", "对一个单位造成1+点伤害,如果它是召唤兽,使它攻击力+1+", function () {
                 var n = parseInt(cmd[2]);
                 if (n != 1 && n != 0) {
                     alert("Index out of range");
@@ -1340,6 +1385,14 @@ function dict(name) {
                 if (Type.summon == c.type)
                     c.at.p += 1 + p.ms;
                 clean(pr);
+                return true;
+            }, x);
+        case "space":
+            return new Magic(0, 8, "扭曲虚空", "沉默并消灭所有生物", function () {
+                p1.deck.forEach(function (c) { _silence(c); });
+                p2.deck.forEach(function (c) { _silence(c); });
+                clean(p1);
+                clean(p2);
                 return true;
             }, x);
     }
