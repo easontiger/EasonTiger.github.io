@@ -46,7 +46,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-05-23 11:30:10
+ * @Last Modified time: 2021-05-24 20:44:46
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -272,6 +272,8 @@ var Creature = /** @class */ (function () {
         this.hide = (feature.get("hide") == 1);
         this.addictive = (feature.get("add") == 1);
         this.critical = (!feature.has("c") ? 0 : feature.get("c"));
+        if (this.hide)
+            this.critical += 0.1;
         this.poisoned = 0;
         this.bleed = 0;
         this.can_t = false;
@@ -353,6 +355,8 @@ var Creature = /** @class */ (function () {
             if (p)
                 at_ed.hp -= Math.floor(this.at.p * c);
             at_ed.hp -= this.at.m;
+            if (this.hide)
+                this.critical -= 0.1;
             this.hide = false;
             if (this.freezing && (m || p))
                 freezing(at_ed);
