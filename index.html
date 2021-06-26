@@ -11,8 +11,13 @@
 		<input type="text" id="com">
 		<button id="sub">submit</button>
 		<a href="upd.html"><button>update</button></a>
+		<button id="link">link</button>
 		<div style="text-align: center;position: absolute;left: 170px;top: 175px;"><input type="button" id="toggle" style="display: none;font-weight: bolder;" value="Start turn"></div>
 		<button id="set">back</button>
+		<div id="l" style="position: absolute;display: none;">
+			<a href="upd.html"><button>update</button></a>
+			<a href="deck.html"><button>deck</button></a>
+		</div>
 		<div id="back" style="position: absolute;background-color:yellowgreen;display: none;">
 			<button onclick="p1.ma=p1.m=p2.m=p2.ma=Infinity;repaint();_event();">Infinity magic</button><br>
 			<button onclick="ald=!ald;">All legend</button><br>
@@ -46,7 +51,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-05-24 20:44:46
+ * @Last Modified time: 2021-06-17 19:34:07
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -433,6 +438,7 @@ function silence(c, kill) {
     if (kill) {
         c.alive = false;
         clean(p_(c));
+        return;
     }
     var p = p_(c);
     c.atl = (c.atl > 0 ? 1 : 0);
@@ -746,7 +752,7 @@ function dict(name) {
                     alert("Index out of range");
                     return false;
                 }
-                silence(pr.deck[n], true);
+                _silence(pr.deck[n]);
                 clean(pr);
                 var m = new map();
                 m.set("rare", x);
@@ -2275,7 +2281,7 @@ function command(cmd_){
 			newG();	</script>
 		<script>
 			var com=document.getElementById("com");
-			document.getElementById("sub").ontouchstart=function(){
+			document.getElementById("sub").onclick=function(){
 				var comm=com.value;
 				try{
 					eval(comm);
@@ -2286,6 +2292,7 @@ function command(cmd_){
 				_event();
 			};
 			document.getElementById("set").onclick=function(){$("#back").toggle();};
+			document.getElementById("link").onclick=function(){$("#l").toggle();};
 		</script>
 	</body>
 </html>
