@@ -50,12 +50,12 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-06-17 19:34:07
+ * @Last Modified time: 2021-06-28 22:42:00
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
     "gravity", "drugI", "clone", "sniper", "drugII", "snake", "guard", "poisonous", "piercing", "kill", "pain", "spill", "mind", "blast", "true-shield", "destroy", "poison", "defense",
-    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat", "hxbs", "whip", "space"];
+    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat", "hxbs", "whip", "space", "smoke"];
 var summon = ["su-base", "su-attack", "su-defense", "su-magic", "su-buff"];
 var cmd, ald = false;
 var range;
@@ -78,9 +78,10 @@ var Type;
     Type[Type["null"] = 0] = "null";
     Type[Type["summon"] = 1] = "summon";
     Type[Type["building"] = 2] = "building";
+    Type[Type["undead"] = 3] = "undead";
 })(Type || (Type = {}));
 ;
-var T = ["无", "召唤兽", "建筑"];
+var T = ["无", "召唤兽", "建筑", "不死族"];
 function rand_rare() {
     var x = rand(100);
     if (x < 10)
@@ -273,11 +274,10 @@ var Creature = /** @class */ (function () {
         this.ms = (!feature.has("ms") ? 0 : feature.get("ms"));
         this.taunt = (feature.get("taunt") == 1);
         this.poisonous = (feature.get("poison") == 1);
-        this.hide = (feature.get("hide") == 1);
         this.addictive = (feature.get("add") == 1);
         this.critical = (!feature.has("c") ? 0 : feature.get("c"));
-        if (this.hide)
-            this.critical += 0.1;
+        if (feature.get("hide"))
+            hide(this);
         this.poisoned = 0;
         this.bleed = 0;
         this.can_t = false;
@@ -421,6 +421,10 @@ function poison(c, n) {
     else
         c.poisoned += n;
 }
+function hide(c) {
+    c.hide = true;
+    c.critical += 0.1;
+}
 function defrost(c) {
     c.hp -= Math.floor(c.frozen / 2);
     c.frozen = 0;
@@ -517,6 +521,7 @@ function dict(name) {
         case "skeleton":
             var m = new map();
             m.set("rare", x);
+            m.set("type", Type.undead);
             m.set("revive", (rarity.LEGENDARY == x ? 2 : 1));
             return new Creature(0, 1, new damage(1), 1, "骷髅", m, "复生(" + m.get("revive") + ")");
         case "s-slime":
@@ -968,9 +973,9 @@ function dict(name) {
             var m = new map();
             m.set("rare", x);
             m.set("range", 1);
-            m.set("hide", 1);
             if (x == rarity.LEGENDARY)
                 m.set("p"), m.set("c", 0.5);
+            m.set("hide", true);
             return new Creature(0, 4, new damage(5), 2, "狙击手", m, "远程;隐匿");
         case "drugII":
             return new Magic(1, 2, "二号药剂", "使目标恢复2+点生命", function () {
@@ -1248,8 +1253,13 @@ function dict(name) {
                 if (tar.type == Type.building)
                     return;
                 var p = ((this.id == 1) ? p1 : p2);
-                if (rarity.LEGENDARY == this.rare || Math.random() >= 0.5)
-                    call(p, new Creature(0, tar.ma, tar.max_at, tar.max_hp, "僵尸", new map()));
+                if (rarity.LEGENDARY == this.rare || Math.random() >= 0.5) {
+                    var y = new Creature(0, tar.ma, tar.max_at, tar.max_hp, "僵尸", new map(), "亡语:对敌方英雄造成1点魔法伤害", "亡语:对敌方英雄造成1点魔法伤害");
+                    y.death = new eventlist([function (tar) {
+                            harm(pr_(tar).that, new damage(0, 1));
+                        }]);
+                    call(p, y);
+                }
             };
             return a;
         case "tomb":
@@ -1300,6 +1310,7 @@ function dict(name) {
         case "bomb-man":
             var m = new map();
             m.set("rare", x);
+            m.set("type", Type.undead);
             m.set("range");
             var a = new Creature(0, 3, new damage(2, 1), 2, "炸弹兵", m, "伤害溅射", "伤害溅射");
             a.attack = function (at_ed) {
@@ -1371,7 +1382,7 @@ function dict(name) {
             m.set("type", Type.summon);
             return new Creature(0, 2, new damage(1), 2, "增益型召唤兽", m);
         case "whip":
-            return new Magic(2, 1, "鞭策", "对一个单位造成1+点伤害,如果它是召唤兽,使它攻击力+1+", function () {
+            return new Magic(2, 1, "鞭策", "对一个生物造成1+点伤害,如果它是召唤兽,使它攻击力+1+", function () {
                 var n = parseInt(cmd[2]);
                 if (n != 1 && n != 0) {
                     alert("Index out of range");
@@ -1402,6 +1413,26 @@ function dict(name) {
                 p2.deck.forEach(function (c) { _silence(c); });
                 clean(p1);
                 clean(p2);
+                return true;
+            }, x);
+        case "smoke":
+            return new Magic(2, 4, "烟雾弹", "使一个随从及其相邻随从获得隐匿", function () {
+                var n = parseInt(cmd[2]);
+                if (n != 1 && n != 0) {
+                    alert("Index out of range");
+                    return false;
+                }
+                var p = p_(n + 1);
+                if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                    alert("Invalid parameter");
+                    return false;
+                }
+                n = parseInt(cmd[3]);
+                if (n >= p.deck.length) {
+                    alert("Index out of range");
+                    return false;
+                }
+                adj(parseInt(cmd[2]) + 1, n).forEach(function (c) { hide(c); });
                 return true;
             }, x);
     }
@@ -1545,11 +1576,12 @@ function skill_dict(name) {
                     var p = ((id == 1) ? p1 : p2);
                     p.that.hp -= 2;
                     var c = new_card(p);
+                    c.value.ma = Math.max(0, c.value.ma - 4);
                     if (c == undefined)
                         return true;
                     p.hand.push(c);
                     return true;
-                }, "生命分流", "抓1张牌,对你造成2点伤害"), new Creature(0, 0, new damage(0, 1), 30, "术士", new map())];
+                }, "生命分流", "抓1张牌并使其法力消耗-4,对你造成2点伤害"), new Creature(0, 0, new damage(0, 1), 30, "术士", new map())];
         case "summon":
             return [new Skill(0, 2, function () {
                     var p = p_(id);
@@ -1645,6 +1677,15 @@ function p_(x) {
     if (x instanceof Creature)
         x = x.id;
     return (x == 1) ? p1 : p2;
+}
+function adj(id, n) {
+    var p = p_(id);
+    var res = [p.deck[n]];
+    if (n > 0)
+        res.push(p.deck[n - 1]);
+    if (n < p.deck.length - 1)
+        res.push(p.deck[n]);
+    return res;
 }
 function pr_(x) {
     if (x instanceof Creature)
