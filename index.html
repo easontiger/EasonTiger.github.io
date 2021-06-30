@@ -1013,8 +1013,8 @@ function dict(name) {
             m.set("rare", x);
             m.set("shield", 2);
             if (rarity.LEGENDARY == x)
-                m.set("m-shield", 1);
-            return new Creature(0, 2, new damage(1), 1, "骷髅守卫", m);
+                m.set("s-shield", 1);
+            return new Creature(0, 2, new damage(1), 1, "骷髅守卫", m, (rarity.LEGENDARY == x ? "圣盾(1)" : ""));
         case "poisonous":
             return new Magic(2, 3, "武器淬毒", "如果目标生物不具剧毒,使它获得剧毒,否则使它获得+1攻击力", function () {
                 var n = parseInt(cmd[2]);
