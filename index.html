@@ -1711,7 +1711,7 @@ function adj(id, n) {
     if (n > 0)
         res.push(p.deck[n - 1]);
     if (n < p.deck.length - 1)
-        res.push(p.deck[n]);
+        res.push(p.deck[n + 1]);
     return res;
 }
 function pr_(x) {
