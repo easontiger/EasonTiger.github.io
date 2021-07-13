@@ -50,7 +50,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-07-07 20:54:40
+ * @Last Modified time: 2021-07-12 19:30:12
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -960,7 +960,7 @@ function dict(name) {
                 return true;
             }, x);
         case "clone":
-            return new Magic(2, 4, "克隆法术", "将目标生物的1/1复制置入你的战场中", function () {
+            return new Magic(2, 4, "克隆法术", (rarity.LEGENDARY == x ? "召唤目标生物的复制" : "召唤目标生物的1/1复制"), function () {
                 var n = parseInt(cmd[2]);
                 if (n != 1 && n != 0) {
                     alert("Index out of range");
@@ -985,7 +985,7 @@ function dict(name) {
                     d.m = 1;
                 else
                     d.p = 1;
-                var c1 = new Creature(0, 4, d, 1, "克隆的" + pr.deck[n].c_name, m);
+                var c1 = new Creature(0, 4, (rarity.LEGENDARY == this.rare ? c.at : d), (rarity.LEGENDARY == this.rare ? c.hp : 1), "克隆的" + pr.deck[n].c_name, m);
                 c1.id = id;
                 c1.std_at = c.std_at;
                 c1.std_ated = c.std_ated;
