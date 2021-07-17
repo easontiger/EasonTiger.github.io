@@ -50,7 +50,7 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-07-13 14:16:59
+ * @Last Modified time: 2021-07-17 22:34:47
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
@@ -235,13 +235,12 @@ function generator() {
     return result;
 }
 var Magic = /** @class */ (function () {
-    function Magic(a, m, nn, eee, e, r) {
+    function Magic(a, m, nn, eee, e) {
         this.ma = m;
         this.attr = a;
         this.c_eff = eee;
         this.c_name = nn;
         this.effect = e;
-        this.rare = r;
         if (this.rare == rarity.LEGENDARY && this.c_name[this.c_name.length - 1] != ")")
             this.c_name = this.c_name + "(传奇)";
     }
@@ -315,10 +314,10 @@ var Creature = /** @class */ (function () {
             if (this.at.m == 0 && this.at.p == 0)
                 return;
             var m = (this.at.m > 0), p = (this.at.p > 0);
-            if (at_er.sacred_shield > 0) {
+            if (at_er.sacred_shield > 0 && p) {
                 at_er.sacred_shield--, p = false;
             }
-            if (at_er.shield != 0) {
+            if (at_er.shield != 0 && p) {
                 at_er.shield = Math.max(0, at_er.shield - this.at.p), p = false;
             }
             var c = (this.critical > rand(100) / 100);
@@ -484,6 +483,13 @@ function silence(c, kill) {
     p.at.m -= c.atb.m;
     p.ms -= c.ms;
     c.ms = 0;
+    var c_ = dict(c.origin);
+    c.at = c_.at;
+    c.max_at = c_.max_at;
+    c.hp = c_.hp + c.max_hp - c.hp;
+    c.max_hp = c_.max_hp;
+    c.ma = c_.ma;
+    c.sacred_shield = c.shield = 0;
     clean(p);
 }
 function buff(c, at, hp, n) {
@@ -521,958 +527,931 @@ function dict(name) {
         x = rarity.LEGENDARY;
     else
         x = rand_rare();
-    switch (name) {
-        case "skeleton":
-            var m = new map();
-            m.set("rare", x);
-            m.set("type", Type.undead);
-            m.set("revive", (rarity.LEGENDARY == x ? 2 : 1));
-            return new Creature(0, 1, new damage(1), 1, "骷髅", m, "复生(" + m.get("revive") + ")");
-        case "s-slime":
-            var m = new map();
-            m.set("rare", x);
-            m.set("add", 1);
-            return new Creature(0, 1, new damage(1), 1, "小史莱姆", m, "附结");
-        case "spider":
-            var m = new map();
-            m.set("rare", x);
-            return new Creature(0, 3, new damage(3), 3, "蜘蛛", m);
-        case "goblin":
-            var m = new map();
-            m.set("rare", x);
-            m.set("taunt", 1);
-            return new Creature(0, 2, new damage(1), 2, "哥布林", m, "嘲讽");
-        case "barbarian":
-            var m = new map();
-            m.set("rare", x);
-            return new Creature(0, 4, new damage(2), 5, "野蛮人", m);
-        case "X-bow":
-            var m = new map();
-            m.set("rare", x);
-            m.set("atn", 4);
-            m.set("range", 1);
-            m.set("type", Type.building);
-            return new Creature(0, 6, new damage(1), 10, "X连弩", m, "超级风怒;远程;建筑");
-        case "fetch": return new Magic(0, 3, "奥术智慧", "抓2张牌", function () {
-            var p = ((id == 1) ? p1 : p2);
-            var c = new_card(p);
-            if (c == undefined)
-                return true;
-            p.hand.push(c);
-            var c = new_card(p);
-            if (c == undefined)
-                return true;
-            p.hand.push(c);
-            return true;
-        }, x);
-        case "hope": return new Magic(0, 2, "孕育希望", "法力上限+1", function () {
-            var p = ((id == 1) ? p1 : p2);
-            p.ma++;
-            return true;
-        }, x);
-        case "arrows":
-            if (rarity.NORMAL == x)
-                return new Magic(0, 2, "万箭齐发", "对每个敌方生物造成1+点物理伤害", function () {
-                    var pr = ((id == 2) ? p1 : p2);
-                    var p = ((id == 1) ? p1 : p2);
-                    pr.deck.forEach(function (e) { harm(e, new damage(1 + p.ms)); });
-                    clean(pr);
-                    return true;
-                }, x);
-            else
-                return new Magic(0, 2, "万箭齐发", "对每个敌方生物造成1+点物理伤害,重复一次", function () {
-                    var pr = ((id == 2) ? p1 : p2);
-                    var p = ((id == 1) ? p1 : p2);
-                    pr.deck.forEach(function (e) { harm(e, new damage(1 + p.ms)); });
-                    clean(pr);
-                    pr.deck.forEach(function (e) { harm(e, new damage(1 + p.ms)); });
-                    clean(pr);
-                    return true;
-                }, x);
-        case "armor": return new Magic(0, 2, "戎装加身", "你的所有生物获得+1/+1", function () {
-            var p = ((id == 1) ? p1 : p2);
-            p.deck.forEach(function (e) { buff(e, new damage(1), 1); });
-            return true;
-        }, x);
-        case "fence":
-            var m = new map();
-            m.set("rare", x);
-            m.set("taunt", 1);
-            m.set("atn", 0);
-            return new Creature(0, 2, new damage(0), 4, "栅栏", m, "嘲讽,不能攻击");
-        case "t_wall":
-            var m = new map();
-            m.set("rare", x);
-            m.set("taunt", 1);
-            m.set("poison", 1);
-            return new Creature(0, 3, new damage(0), 3, "荆墙", m, "嘲讽;剧毒");
-        case "reap": return new Magic(2, 3, "斩杀", "摧毁一个最大生命<=3+的生物", function () {
-            var n = parseInt(cmd[2]);
-            if (n != 1 && n != 0) {
-                alert("Index out of range");
-                return false;
-            }
-            var pr = ((n == 0) ? p1 : p2);
-            if (!cmd[3]) {
-                alert("Invalid parameter");
-                return false;
-            }
-            n = parseInt(cmd[3]);
-            if (n >= pr.deck.length) {
-                alert("Index out of range");
-                return false;
-            }
-            var p = ((id == 1) ? p1 : p2);
-            if (pr.deck[n].max_hp > 3 + p.ms) {
-                alert("Creature chosen doesn't satisfy requirements");
-                return false;
-            }
-            pr.deck[n].alive = false;
-            clean(pr);
-            return true;
-        }, x);
-        case "squash": return new Magic(2, 3, "碾碎", "摧毁一个力量<=3的生物", function () {
-            var n = parseInt(cmd[2]);
-            if (n != 1 && n != 0) {
-                alert("Index out of range");
-                return false;
-            }
-            var pr = ((n == 0) ? p1 : p2);
-            n = parseInt(cmd[3]);
-            if (n >= pr.deck.length) {
-                alert("Index out of range");
-                return false;
-            }
-            if (pr.deck[n].at.p > 3) {
-                alert("Creature chosen doesn't satisfy requirements");
-                return false;
-            }
-            pr.deck[n].alive = false;
-            clean(pr);
-            return true;
-        }, x);
-        case "p-spider":
-            var m = new map();
-            m.set("rare", x);
-            m.set("poison", 1);
-            return new Creature(0, 4, new damage(2, 1), 3, "毒蜘蛛", m, "剧毒");
-        case "archer":
-            var m = new map();
-            m.set("rare", x);
-            m.set("range", 1);
-            var c = new Creature(0, 2, new damage(1), 2, "弓箭手", m, "远程");
-            ent(c);
-            return c;
-        case "shooter":
-            var m = new map();
-            m.set("rare", x);
-            m.set("range", 1);
-            return new Creature(0, 4, new damage(3), 3, "火枪手", m, "远程");
-        case "spear":
-            var m = new map();
-            m.set("rare", x);
-            m.set("range", 1);
-            return new Creature(0, 2, new damage(2), 1, "哥布林投矛手", m, "远程");
-        case "mouse":
-            var m = new map();
-            m.set("rare", x);
-            var c = new Creature(0, 1, new damage(1), 1, "瘟疫鼠", m, "亡语:一个随机敌方生物获得-1/-1", "亡语:一个随机敌方生物获得-1/-1");
-            if (c.rare != rarity.LEGENDARY)
-                c.death = new eventlist(Array(function (tar) {
-                    tar.usd = true;
-                    var pr = ((tar.id == 2) ? p1 : p2);
-                    if (pr.deck.length == 0)
-                        return;
-                    var cd = random_el(pr.deck);
-                    buff(cd, new damage(-1), -1);
-                    clean(pr);
-                }));
-            else {
-                c.death = new eventlist(Array(function (tar) {
-                    tar.usd = true;
-                    var pr = ((tar.id == 2) ? p1 : p2);
-                    if (pr.deck.length == 0)
-                        return;
-                    for (var i = 0; i < pr.deck.length; i++)
-                        buff(pr.deck[i], new damage(-1), -1);
-                    clean(pr);
-                }));
-                c.c_attr = c.const_attr = "亡语:所有敌方生物获得-1/-1";
-            }
-            return c;
-        case "b-angel":
-            var m = new map();
-            m.set("rare", x);
-            m.set("range", 2);
-            var c = new Creature(2, 5, new damage(4), 4, "一号天使", m, "战吼:目标生物获得+1/+1;飞行");
-            c.appear = function () {
-                if (cmd.length != 4 && cmd.length != 2) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                if (cmd.length == 2) {
-                    return confirm("Are you sure that you do not need appear?");
-                }
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                if (!cmd[3]) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                buff(pr.deck[n], new damage(1), 1);
-                return true;
-            };
-            return c;
-        case "m-slime":
-            var m = new map();
-            m.set("rare", x);
-            m.set("add", 1);
-            var c = new Creature(0, 3, new damage(2), 2, "中史莱姆", m, "亡语:召唤一个小史莱姆;附结", "亡语:召唤一个小史莱姆");
-            c.death = new eventlist(Array(function (tar) {
-                var pr = ((tar.id == 1) ? p1 : p2);
-                tar.usd = true;
-                call(pr, dict("s-slime"));
-            }));
-            return c;
-        case "l-slime":
-            var m = new map();
-            m.set("rare", x);
-            m.set("add", 1);
-            m.set("taunt", 1);
-            var c = new Creature(0, 5, new damage(3), 3, "大史莱姆", m, "亡语:召唤一个中史莱姆;嘲讽;附结", "亡语:召唤一个中史莱姆");
-            c.death = new eventlist(Array(function (tar) {
-                var pr = ((tar.id == 1) ? p1 : p2);
-                tar.usd = true;
-                call(pr, dict("m-slime"));
-            }));
-            return c;
-        case "to_sheep":
-            return new Magic(2, 4, "变羊术", "将一个生物变成一个1/1的羊", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                if (!cmd[3]) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                _silence(pr.deck[n]);
-                clean(pr);
+    function _dict(n) {
+        switch (n) {
+            case "skeleton":
                 var m = new map();
-                m.set("rare", x);
-                call(pr, new Creature(0, 1, new damage(1), 1, "羊", m), n);
-                return true;
-            }, x);
-        case "fireball":
-            return new Magic(1, 5, "火球", "对一个单位造成5+点伤害并解冻它", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
+                m.set("type", Type.undead);
+                m.set("revive", (rarity.LEGENDARY == x ? 2 : 1));
+                return new Creature(0, 1, new damage(1), 1, "骷髅", m, "复生(" + m.get("revive") + ")");
+            case "s-slime":
+                var m = new map();
+                m.set("add", 1);
+                return new Creature(0, 1, new damage(1), 1, "小史莱姆", m, "附结");
+            case "spider":
+                var m = new map();
+                return new Creature(0, 3, new damage(3), 3, "蜘蛛", m);
+            case "goblin":
+                var m = new map();
+                m.set("taunt", 1);
+                return new Creature(0, 2, new damage(1), 2, "哥布林", m, "嘲讽");
+            case "barbarian":
+                var m = new map();
+                return new Creature(0, 4, new damage(2), 5, "野蛮人", m);
+            case "X-bow":
+                var m = new map();
+                m.set("atn", 4);
+                m.set("range", 1);
+                m.set("type", Type.building);
+                return new Creature(0, 6, new damage(1), 10, "X连弩", m, "超级风怒;远程;建筑");
+            case "fetch": return new Magic(0, 3, "奥术智慧", "抓2张牌", function () {
                 var p = ((id == 1) ? p1 : p2);
-                if (!isInt(cmd[3]) && cmd[3] != undefined) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                var c;
-                if (cmd[3] == undefined) {
-                    c = pr.that;
-                }
-                else {
-                    n = parseInt(cmd[3]);
-                    if (n >= pr.deck.length) {
-                        alert("Index out of range");
-                        return false;
-                    }
-                    c = pr.deck[n];
-                }
-                harm(c, new damage(0, 5 + p.ms));
-                defrost(c);
-                clean(pr);
-                return true;
-            }, x);
-        case "frozen":
-            return new Magic(1, 4, "冰冻法术", "冻结一个生物(2)及它的相邻生物", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                if (!cmd[3]) {
-                    freezing(pr.that, 2);
+                var c = new_card(p);
+                if (c == undefined)
                     return true;
-                }
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                freezing(pr.deck[n], 2);
-                if (n >= 1)
-                    freezing(pr.deck[n - 1], 1);
-                if (n < pr.deck.length - 1)
-                    freezing(pr.deck[n + 1], 1);
-                return true;
-            }, x);
-        case "poison":
-            return new Magic(1, 4, "毒药法术", "使一个生物(2)及它的相邻生物获得中毒", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                if (!cmd[3]) {
-                    poison(pr.that, 2);
+                p.hand.push(c);
+                var c = new_card(p);
+                if (c == undefined)
                     return true;
-                }
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                poison(pr.deck[n], 2);
-                if (n >= 1)
-                    poison(pr.deck[n - 1], 1);
-                if (n < pr.deck.length - 1)
-                    poison(pr.deck[n + 1], 1);
-                clean(pr);
-                return true;
-            }, x);
-        case "flame":
-            return new Magic(1, 3, "净焰投掷", "对一个单位造成3+点伤害并解冻它", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                if (!isInt(cmd[3]) && cmd[3] != undefined) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                var c;
-                if (cmd[3] == undefined) {
-                    c = pr.that;
-                }
-                else {
-                    n = parseInt(cmd[3]);
-                    if (n >= pr.deck.length) {
-                        alert("Index out of range");
-                        return false;
-                    }
-                    c = pr.deck[n];
-                }
-                var p = ((id == 1) ? p1 : p2);
-                harm(c, new damage(0, 3 + p.ms));
-                defrost(c);
-                clean(pr);
-                return true;
-            }, x);
-        case "rand":
-            return new Magic(0, 4, "随机", "将一张随机卡牌置入你的手牌并使它的法力消耗变为0", function () {
-                var p = ((id == 1) ? p1 : p2);
-                var c = new Card(dict(random_el(card_dict)));
-                c.value.ma = 0;
                 p.hand.push(c);
                 return true;
-            }, x);
-        case "f-element":
-            var m = new map();
-            m.set("rare", x);
-            m.set("defrost", 1);
-            m.set("type", Type.element);
-            var c = new Creature(0, 2, new damage(0, 2), 2, "火元素", m, "解冻目标");
-            ent(c);
-            return c;
-        case "i-element":
-            var m = new map();
-            m.set("rare", x);
-            m.set("freezing", 1);
-            m.set("type", Type.element);
-            var c = new Creature(0, 2, new damage(0, 1), 3, "冰元素", m, "冻结目标");
-            ent(c);
-            return c;
-        case "m-element":
-            var m = new map();
-            m.set("rare", x);
-            m.set("p", 1);
-            m.set("type", Type.element);
-            return new Creature(0, 3, new damage(3), 2, "金元素", m, "穿透");
-        case "wi-element":
-            var m = new map();
-            m.set("rare", x);
-            m.set('atn', 2);
-            m.set("charge", 1);
-            m.set("type", Type.element);
-            return new Creature(0, 3, new damage(1), 2, "风元素", m, "冲锋;风怒");
-        case "gravity":
-            return new Magic(0, 4, "重力反转", "使所有飞行生物变为近战，非飞行生物变为飞行", function () {
-                p1.deck.forEach(function (e) { if (e.r == range.FLYING) {
-                    e.r = range.GROUND, e.m.set("range", 0);
-                }
-                else {
-                    e.r = range.FLYING, e.m.set("range", 2);
-                } });
-                p2.deck.forEach(function (e) { if (e.r == range.FLYING) {
-                    e.r = range.GROUND, e.m.set("range", 0);
-                }
-                else {
-                    e.r = range.FLYING, e.m.set("range", 2);
-                } });
-                return true;
-            }, x);
-        case "m-b":
-            return new Magic(0, 0, "魔法球", "你的法力+1", function () {
+            });
+            case "hope": return new Magic(0, 2, "孕育希望", "法力上限+1", function () {
                 var p = ((id == 1) ? p1 : p2);
-                p.m++;
+                p.ma++;
                 return true;
-            }, rarity.NORMAL);
-        case "drugI":
-            return new Magic(0, 2, "力量药剂", "使你的英雄获得+1力量", function () {
-                var p = ((id == 1) ? p1 : p2);
-                buff(p.that, new damage(1));
-                return true;
-            }, x);
-        case "drugIII":
-            return new Magic(0, 2, "魔力药剂", "使你的英雄获得+1法强" + (rarity.LEGENDARY == x ? "并获得1魔法伤害" : ""), function () {
-                var p = ((id == 1) ? p1 : p2);
-                p.ms++;
-                if (rarity.LEGENDARY == this.rare)
-                    buff(p.that, new damage(0, 1));
-                return true;
-            }, x);
-        case "clone":
-            return new Magic(2, 4, "克隆法术", (rarity.LEGENDARY == x ? "召唤目标生物的复制" : "召唤目标生物的1/1复制"), function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                var p = ((id == 1) ? p1 : p2);
-                if (!isInt(cmd[3])) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                n = parseInt(cmd[3]);
-                var c = pr.deck[n];
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var m = new map(c.m);
-                m.set("charge", 1);
-                var d = new damage(0);
-                if (c.at.m > c.at.p)
-                    d.m = 1;
+            });
+            case "arrows":
+                if (rarity.NORMAL == x)
+                    return new Magic(0, 2, "万箭齐发", "对每个敌方生物造成1+点物理伤害", function () {
+                        var pr = ((id == 2) ? p1 : p2);
+                        var p = ((id == 1) ? p1 : p2);
+                        pr.deck.forEach(function (e) { harm(e, new damage(1 + p.ms)); });
+                        clean(pr);
+                        return true;
+                    });
                 else
-                    d.p = 1;
-                var c1 = new Creature(0, 4, (rarity.LEGENDARY == this.rare ? c.at["new"]() : d), (rarity.LEGENDARY == this.rare ? c.hp : 1), "克隆的" + pr.deck[n].c_name, m);
-                c1.id = id;
-                c1.std_at = c.std_at;
-                c1.std_ated = c.std_ated;
-                c1.can_t = c.can_t;
-                c1.toggle = c.toggle;
-                c1.death = c.death;
-                call(p, c1);
+                    return new Magic(0, 2, "万箭齐发", "对每个敌方生物造成1+点物理伤害,重复一次", function () {
+                        var pr = ((id == 2) ? p1 : p2);
+                        var p = ((id == 1) ? p1 : p2);
+                        pr.deck.forEach(function (e) { harm(e, new damage(1 + p.ms)); });
+                        clean(pr);
+                        pr.deck.forEach(function (e) { harm(e, new damage(1 + p.ms)); });
+                        clean(pr);
+                        return true;
+                    });
+            case "armor": return new Magic(0, 2, "戎装加身", "你的所有生物获得+1/+1", function () {
+                var p = ((id == 1) ? p1 : p2);
+                p.deck.forEach(function (e) { buff(e, new damage(1), 1); });
                 return true;
-            }, x);
-        case "sniper":
-            var m = new map();
-            m.set("rare", x);
-            m.set("range", 1);
-            if (x == rarity.LEGENDARY)
-                m.set("p"), m.set("c", 0.5);
-            m.set("hide", true);
-            return new Creature(0, 4, new damage(5), 2, "狙击手", m, "远程;隐匿" + (rarity.LEGENDARY == x ? ";暴击(50%);穿透" : ""));
-        case "drugII":
-            return new Magic(1, 2, "治疗药剂", "使目标恢复2+点生命", function () {
+            });
+            case "fence":
+                var m = new map();
+                m.set("taunt", 1);
+                m.set("atn", 0);
+                return new Creature(0, 2, new damage(0), 4, "栅栏", m, "嘲讽,不能攻击");
+            case "t_wall":
+                var m = new map();
+                m.set("taunt", 1);
+                m.set("poison", 1);
+                return new Creature(0, 3, new damage(0), 3, "荆墙", m, "嘲讽;剧毒");
+            case "reap": return new Magic(2, 3, "斩杀", "摧毁一个最大生命<=3+的生物", function () {
                 var n = parseInt(cmd[2]);
                 if (n != 1 && n != 0) {
                     alert("Index out of range");
                     return false;
                 }
                 var pr = ((n == 0) ? p1 : p2);
-                var p = ((id == 1) ? p1 : p2);
-                if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                if (!cmd[3]) {
                     alert("Invalid parameter");
                     return false;
                 }
-                if (cmd[3] == undefined) {
-                    cure(pr.that, 2 + p.ms);
-                    return true;
-                }
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                cure(pr.deck[n], 2 + p.ms);
-                return true;
-            }, x);
-        case "snake":
-            var m = new map();
-            m.set("rare", x);
-            m.set("poison", 1);
-            m.set("add", 1);
-            return new Creature(0, 2, new damage(1), 1, "蛇", m, "附结;剧毒");
-        case "guard":
-            var m = new map();
-            m.set("rare", x);
-            m.set("type", Type.undead);
-            m.set("shield", 2);
-            if (rarity.LEGENDARY == x)
-                m.set("s-shield", 1), m.set("taunt", 1);
-            return new Creature(0, 2, new damage(1), 1, "骷髅守卫", m, (rarity.LEGENDARY == x ? "圣盾(1);嘲讽" : ""));
-        case "poisonous":
-            return new Magic(2, 3, "武器淬毒", "如果目标生物不具剧毒,使它获得剧毒,否则使它获得+1攻击力", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                if (pr.deck[n].poisonous)
-                    buff(pr.deck[n], new damage(0, 1));
-                else
-                    pr.deck[n].poisonous = true, pr.deck[n].m.set("poison", 1);
-                return true;
-            }, x);
-        case "piercing":
-            return new Magic(2, 4, "武器锐化", "目标生物获得穿透且使它获得+1攻击力", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                pr.deck[n].m.set("p", 1);
-                pr.deck[n].piercing = true;
-                buff(pr.deck[n], new damage(1));
-                return true;
-            }, x);
-        case "kill":
-            return new Magic(2, 5, "影袭", "消灭目标生物", function () {
-                var n = parseInt(cmd[2]);
-                var pr = ((n == 0) ? p1 : p2);
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                pr.deck[n].alive = false;
-                clean(pr);
-                return true;
-            }, x);
-        case "pain":
-            if (rarity.NORMAL == x)
-                return new Magic(2, 5, "痛苦转化", "对目标生物造成4+点伤害,你回复4+点生命", function () {
-                    var n = parseInt(cmd[2]);
-                    var pr = ((n == 0) ? p1 : p2);
-                    n = parseInt(cmd[3]);
-                    if (n >= pr.deck.length) {
-                        alert("Index out of range");
-                        return false;
-                    }
-                    var p = ((id == 1) ? p1 : p2);
-                    harm(pr.deck[n], new damage(0, 4 + p.ms));
-                    cure(p.that, 4 + p.ms);
-                    clean(pr);
-                    return true;
-                }, x);
-            else
-                return new Magic(2, 5, "痛苦转化", "消灭目标随从，你回复其最大生命值+点生命", function () {
-                    var n = parseInt(cmd[2]);
-                    var pr = ((n == 0) ? p1 : p2);
-                    n = parseInt(cmd[3]);
-                    if (n >= pr.deck.length) {
-                        alert("Index out of range");
-                        return false;
-                    }
-                    var p = ((id == 1) ? p1 : p2);
-                    pr.deck[n].alive = false;
-                    cure(p.that, pr.deck[n].max_hp + p.ms);
-                    clean(pr);
-                    return true;
-                }, x);
-        case "spill":
-            var m = new map();
-            m.set("rare", x);
-            var c = new Creature(0, 1, new damage(0, 2), 1, "溅射焰团", m, "亡语:随机对对手的一个生物造成1点伤害", "亡语:随机对对手的一个生物造成1点伤害");
-            if (c.rare != rarity.LEGENDARY)
-                c.death = new eventlist(Array(function (tar) {
-                    tar.usd = true;
-                    var pr = ((tar.id == 2) ? p1 : p2);
-                    if (pr.deck.length == 0)
-                        return;
-                    var cd = random_el(pr.deck);
-                    harm(cd, new damage(0, 1));
-                    clean(pr);
-                }));
-            else {
-                c.death = new eventlist(Array(function (tar) {
-                    tar.usd = true;
-                    var pr = ((tar.id == 2) ? p1 : p2);
-                    if (pr.deck.length == 0)
-                        return;
-                    for (var i = 0; i < pr.deck.length; i++)
-                        harm(pr.deck[i], new damage(0, 1));
-                    ;
-                    clean(pr);
-                }));
-                c.c_attr = c.const_attr = "亡语:对所有敌方生物造成1点伤害";
-            }
-            ent(c);
-            return c;
-        case "mind": return new Magic(0, 2, "心灵震爆", "对对手造成5+点伤害", function () { return (harm((id == 1 ? p2 : p1).that, new damage(0, 5 + ((id == 1) ? p1 : p2).ms)), true); }, x);
-        case "blast":
-            return new Magic(1, 10, "炎爆术", "对一个单位造成10+点伤害并解冻它", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
-                if (!isInt(cmd[3]) && cmd[3] != undefined) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                var c;
-                if (cmd[3] == undefined) {
-                    c = pr.that;
-                }
-                else {
-                    n = parseInt(cmd[3]);
-                    if (n >= pr.deck.length) {
-                        alert("Index out of range");
-                        return false;
-                    }
-                    c = pr.deck[n];
-                }
-                var p = ((id == 1) ? p1 : p2);
-                harm(c, new damage(0, 10 + p.ms));
-                defrost(c);
-                clean(pr);
-                return true;
-            }, x);
-        case "true-shield":
-            var ma = new Magic(2, 0, "真言术·盾", "使一个生物获得+2+生命" + (rarity.LEGENDARY == x ? "并获得2+护盾" : ""), function () { }, x);
-            ma.effect = function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var pr = ((n == 0) ? p1 : p2);
                 n = parseInt(cmd[3]);
                 if (n >= pr.deck.length) {
                     alert("Index out of range");
                     return false;
                 }
                 var p = ((id == 1) ? p1 : p2);
-                buff(pr.deck[n], new damage(0), 2 + p.ms);
-                if (rarity.LEGENDARY == this.rare)
-                    pr.deck[n].shield += 2 + p.ms;
-                return true;
-            }.bind(ma);
-            return ma;
-        case "destroy":
-            return new Magic(2, 3, "暗言术·灭", "摧毁一个力量>=5的生物", function () {
-                var n = parseInt(cmd[2]);
-                var pr = ((n == 0) ? p1 : p2);
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                if (pr.deck[n].at.p < 5) {
+                if (pr.deck[n].max_hp > 3 + p.ms) {
                     alert("Creature chosen doesn't satisfy requirements");
                     return false;
                 }
                 pr.deck[n].alive = false;
                 clean(pr);
                 return true;
-            }, x);
-        case "defense":
-            return new Magic(1, 2, "防御姿态", (x != rarity.LEGENDARY ? "使目标获得3+点护盾" : "使目标生物获得1层圣盾"), (x != rarity.LEGENDARY ? function () {
-                var n = parseInt(cmd[2]);
-                var pr = ((n == 0) ? p1 : p2);
-                if (!isInt(cmd[3]) && cmd[3] != undefined) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                var p = ((id == 1) ? p1 : p2);
-                if (cmd[3] == undefined) {
-                    pr.that.shield += 3 + p.ms;
-                    return true;
-                }
-                n = parseInt(cmd[3]);
-                pr.deck[n].shield += 3 + p.ms;
-                return true;
-            } : function () {
-                var n = parseInt(cmd[2]);
-                var pr = ((n == 0) ? p1 : p2);
-                if (!isInt(cmd[3])) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                n = parseInt(cmd[3]);
-                pr.deck[n].sacred_shield++;
-                return true;
-            }), x);
-        case "shotgun":
-            var m = new map();
-            m.set("rare", x);
-            m.set("range");
-            var a = new Creature(0, 5, new damage(4), 3, "霰弹枪手", m, "伤害溅射", "伤害溅射");
-            a.attack = function (at_ed) {
-                var pr = ((id == 2) ? p1 : p2);
-                a.std_at(at_ed);
-                if (pr.that == at_ed)
-                    return;
-                var n = parseInt(cmd[2]);
-                if (n >= 1)
-                    a.std_at(pr.deck[n - 1], 0.5), a.atl++;
-                if (n < pr.deck.length - 1)
-                    a.std_at(pr.deck[n + 1], 0.5), a.atl++;
-            };
-            return a;
-        case "ex1":
-            var m = new map();
-            m.set("rare", rarity.LEGENDARY);
-            m.set("s-shield", 1);
-            var a = new Creature(0, 5, new damage(0), 1, "实验体I", m, "圣盾;当受到战斗伤害时,获得+1/+1和圣盾", "当收到战斗伤害时,获得+1/+1和圣盾");
-            a.harmed = function () { return (buff(a, new damage(1), 1), a.sacred_shield++); };
-            return a;
-        case "zombie":
-            var m = new map();
-            m.set("rare", x);
-            var a = new Creature(0, 4, new damage(2), 5, "母体", m, "当完成击杀时," + (rarity.LEGENDARY == x ? "" : "50%概率") + "使目标变为我方僵尸", "当完成击杀时," + (rarity.LEGENDARY == x ? "" : "50%概率") + "使目标变为我方僵尸");
-            a.kill = function (tar) {
-                if (tar.type == Type.building)
-                    return;
-                var p = ((this.id == 1) ? p1 : p2);
-                if (rarity.LEGENDARY == this.rare || Math.random() >= 0.5) {
-                    var y = new Creature(0, tar.ma, tar.max_at, tar.max_hp, "僵尸", new map(), "亡语:对敌方英雄造成1点魔法伤害", "亡语:对敌方英雄造成1点魔法伤害");
-                    y.death = new eventlist([function (tar) {
-                            harm(pr_(tar).that, new damage(0, 1));
-                        }]);
-                    call(p, y);
-                }
-            };
-            return a;
-        case "tomb":
-            var m = new map();
-            m.set("rare", x);
-            m.set("atn", 0);
-            m.set("type", Type.building);
-            var a = new Creature(0, 4, new damage(0), 5, "骷髅墓碑", m, "回合结束时，召唤1个骷髅;亡语:召唤3个骷髅", "回合结束时，召唤1个骷髅;亡语:召唤3个骷髅");
-            a.end = new eventlist([function (c) {
-                    var p = ((c.id == 1) ? p1 : p2);
-                    call(p, dict("skeleton"));
-                }]);
-            a.death = new eventlist([function (c) {
-                    var p = ((c.id == 1) ? p1 : p2);
-                    call(p, dict("skeleton"));
-                    call(p, dict("skeleton"));
-                    call(p, dict("skeleton"));
-                }]);
-            return a;
-        case "wi-doc":
-            var m = new map();
-            m.set("rare", x);
-            var a = new Creature(2, 1, new damage(2), 1, "巫医", m, "战吼:为目标回复2点血量");
-            a.appear = function () {
-                if (cmd.length != 4 && cmd.length != 3) {
-                    alert("Invalid parameter");
-                    return false;
-                }
+            });
+            case "squash": return new Magic(2, 3, "碾碎", "摧毁一个力量<=3的生物", function () {
                 var n = parseInt(cmd[2]);
                 if (n != 1 && n != 0) {
                     alert("Index out of range");
                     return false;
                 }
                 var pr = ((n == 0) ? p1 : p2);
-                if (!cmd[3]) {
-                    cure(pr.that, 2);
-                    return true;
-                }
                 n = parseInt(cmd[3]);
                 if (n >= pr.deck.length) {
                     alert("Index out of range");
                     return false;
                 }
-                cure(pr.deck[n], 2);
-                return true;
-            };
-            return a;
-        case "bomb-man":
-            var m = new map();
-            m.set("rare", x);
-            m.set("type", Type.undead);
-            m.set("range");
-            var a = new Creature(0, 3, new damage(2, 1), 2, "炸弹兵", m, "伤害溅射", "伤害溅射");
-            a.attack = function (at_ed) {
-                var pr = ((id == 2) ? p1 : p2);
-                a.std_at(at_ed);
-                if (pr.that == at_ed)
-                    return;
-                var n = parseInt(cmd[2]);
-                if (n >= 1)
-                    a.std_at(pr.deck[n - 1], 0.5), a.atl++;
-                if (n < pr.deck.length - 1)
-                    a.std_at(pr.deck[n + 1], 0.5), a.atl++;
-            };
-            ent(a);
-            return a;
-        case "ma-exp":
-            return new Magic(0, 3, "魔爆术", "对每个敌方生物造成1+点魔法伤害", function () {
-                var pr = ((id == 2) ? p1 : p2);
-                var p = ((id == 1) ? p1 : p2);
-                pr.deck.forEach(function (e) { harm(e, new damage(0, 1 + p.ms)); });
+                if (pr.deck[n].at.p > 3) {
+                    alert("Creature chosen doesn't satisfy requirements");
+                    return false;
+                }
+                pr.deck[n].alive = false;
                 clean(pr);
                 return true;
-            }, x);
-        case "b-cat":
-            var m = new map();
-            m.set("rare", x);
-            m.set("revive", 8);
-            m.set("ms", 1);
-            var a = new Creature(0, 5, new damage(1), 1, "黑猫", m, "复生(8),法强+1");
-            return a;
-        case "hxbs":
-            var m = new map();
-            m.set("rare", x);
-            m.set("range");
-            var a = new Creature(0, 4, new damage(2), 3, "回旋镖手", m, "攻击时会造成2次伤害", "攻击时会造成2次伤害");
-            a.attack = function (at_ed) {
-                a.std_at(at_ed);
-                a.std_at(at_ed);
-                a.atl++;
-            };
-            return a;
-        case "su-base":
-            var m = new map();
-            m.set("rare", x);
-            m.set("type", Type.summon);
-            return new Creature(0, 2, new damage(2), 2, "标准型召唤兽", m);
-        case "su-defense":
-            var m = new map();
-            m.set("taunt", 1);
-            m.set("rare", x);
-            m.set("type", Type.summon);
-            return new Creature(0, 2, new damage(1), 3, "防御型召唤兽", m);
-        case "su-attack":
-            var m = new map();
-            m.set("charge", 1);
-            m.set("rare", x);
-            m.set("type", Type.summon);
-            return new Creature(0, 2, new damage(3), 1, "攻击型召唤兽", m);
-        case "su-magic":
-            var m = new map();
-            m.set("ms", 1);
-            m.set("rare", x);
-            m.set("type", Type.summon);
-            return new Creature(0, 2, new damage(0, 1), 1, "法术型召唤兽", m);
-        case "su-buff":
-            var m = new map();
-            m.set("atb", new damage(1));
-            m.set("hpb", 1);
-            m.set("rare", x);
-            m.set("type", Type.summon);
-            return new Creature(0, 2, new damage(1), 2, "增益型召唤兽", m);
-        case "whip":
-            return new Magic(2, 1, "鞭策", "对一个生物造成1+点伤害,如果它是召唤兽,使它攻击力+1+", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
+            });
+            case "p-spider":
+                var m = new map();
+                m.set("poison", 1);
+                return new Creature(0, 4, new damage(2, 1), 3, "毒蜘蛛", m, "剧毒");
+            case "archer":
+                var m = new map();
+                m.set("range", 1);
+                var c = new Creature(0, 2, new damage(1), 2, "弓箭手", m, "远程");
+                ent(c);
+                return c;
+            case "shooter":
+                var m = new map();
+                m.set("range", 1);
+                return new Creature(0, 4, new damage(3), 3, "火枪手", m, "远程");
+            case "spear":
+                var m = new map();
+                m.set("range", 1);
+                return new Creature(0, 2, new damage(2), 1, "哥布林投矛手", m, "远程");
+            case "mouse":
+                var m = new map();
+                var c = new Creature(0, 1, new damage(1), 1, "瘟疫鼠", m, "亡语:一个随机敌方生物获得-1/-1", "亡语:一个随机敌方生物获得-1/-1");
+                if (c.rare != rarity.LEGENDARY)
+                    c.death = new eventlist(Array(function (tar) {
+                        tar.usd = true;
+                        var pr = ((tar.id == 2) ? p1 : p2);
+                        if (pr.deck.length == 0)
+                            return;
+                        var cd = random_el(pr.deck);
+                        buff(cd, new damage(-1), -1);
+                        clean(pr);
+                    }));
+                else {
+                    c.death = new eventlist(Array(function (tar) {
+                        tar.usd = true;
+                        var pr = ((tar.id == 2) ? p1 : p2);
+                        if (pr.deck.length == 0)
+                            return;
+                        for (var i = 0; i < pr.deck.length; i++)
+                            buff(pr.deck[i], new damage(-1), -1);
+                        clean(pr);
+                    }));
+                    c.c_attr = c.const_attr = "亡语:所有敌方生物获得-1/-1";
                 }
-                var pr = ((n == 0) ? p1 : p2);
-                var p = ((id == 1) ? p1 : p2);
-                if (!isInt(cmd[3]) && cmd[3] != undefined) {
-                    alert("Invalid parameter");
-                    return false;
+                return c;
+            case "b-angel":
+                var m = new map();
+                m.set("range", 2);
+                var c = new Creature(2, 5, new damage(4), 4, "一号天使", m, "战吼:目标生物获得+1/+1;飞行");
+                c.appear = function () {
+                    if (cmd.length != 4 && cmd.length != 2) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    if (cmd.length == 2) {
+                        return confirm("Are you sure that you do not need appear?");
+                    }
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!cmd[3]) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    buff(pr.deck[n], new damage(1), 1);
+                    return true;
+                };
+                return c;
+            case "m-slime":
+                var m = new map();
+                m.set("add", 1);
+                var c = new Creature(0, 3, new damage(2), 2, "中史莱姆", m, "亡语:召唤一个小史莱姆;附结", "亡语:召唤一个小史莱姆");
+                c.death = new eventlist(Array(function (tar) {
+                    var pr = ((tar.id == 1) ? p1 : p2);
+                    tar.usd = true;
+                    call(pr, dict("s-slime"));
+                }));
+                return c;
+            case "l-slime":
+                var m = new map();
+                m.set("add", 1);
+                m.set("taunt", 1);
+                var c = new Creature(0, 5, new damage(3), 3, "大史莱姆", m, "亡语:召唤一个中史莱姆;嘲讽;附结", "亡语:召唤一个中史莱姆");
+                c.death = new eventlist(Array(function (tar) {
+                    var pr = ((tar.id == 1) ? p1 : p2);
+                    tar.usd = true;
+                    call(pr, dict("m-slime"));
+                }));
+                return c;
+            case "to_sheep":
+                return new Magic(2, 4, "变羊术", "将一个生物变成一个1/1的羊", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!cmd[3]) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    _silence(pr.deck[n]);
+                    clean(pr);
+                    call(pr, dict("sheep"), n);
+                    return true;
+                });
+            case "sheep":
+                var m = new map();
+                return new Creature(0, 1, new damage(1), 1, "羊", m);
+            case "soldier":
+                var m = new map();
+                return new Creature(0, 1, new damage(1), 1, "士兵", m);
+            case "fireball":
+                return new Magic(1, 5, "火球", "对一个单位造成5+点伤害并解冻它", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    var p = ((id == 1) ? p1 : p2);
+                    if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    var c;
+                    if (cmd[3] == undefined) {
+                        c = pr.that;
+                    }
+                    else {
+                        n = parseInt(cmd[3]);
+                        if (n >= pr.deck.length) {
+                            alert("Index out of range");
+                            return false;
+                        }
+                        c = pr.deck[n];
+                    }
+                    harm(c, new damage(0, 5 + p.ms));
+                    defrost(c);
+                    clean(pr);
+                    return true;
+                });
+            case "frozen":
+                return new Magic(1, 4, "冰冻法术", "冻结一个生物(2)及它的相邻生物", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!cmd[3]) {
+                        freezing(pr.that, 2);
+                        return true;
+                    }
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    freezing(pr.deck[n], 2);
+                    if (n >= 1)
+                        freezing(pr.deck[n - 1], 1);
+                    if (n < pr.deck.length - 1)
+                        freezing(pr.deck[n + 1], 1);
+                    return true;
+                });
+            case "poison":
+                return new Magic(1, 4, "毒药法术", "使一个生物(2)及它的相邻生物获得中毒", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!cmd[3]) {
+                        poison(pr.that, 2);
+                        return true;
+                    }
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    poison(pr.deck[n], 2);
+                    if (n >= 1)
+                        poison(pr.deck[n - 1], 1);
+                    if (n < pr.deck.length - 1)
+                        poison(pr.deck[n + 1], 1);
+                    clean(pr);
+                    return true;
+                });
+            case "flame":
+                return new Magic(1, 3, "净焰投掷", "对一个单位造成3+点伤害并解冻它", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    var c;
+                    if (cmd[3] == undefined) {
+                        c = pr.that;
+                    }
+                    else {
+                        n = parseInt(cmd[3]);
+                        if (n >= pr.deck.length) {
+                            alert("Index out of range");
+                            return false;
+                        }
+                        c = pr.deck[n];
+                    }
+                    var p = ((id == 1) ? p1 : p2);
+                    harm(c, new damage(0, 3 + p.ms));
+                    defrost(c);
+                    clean(pr);
+                    return true;
+                });
+            case "rand":
+                return new Magic(0, 4, "随机", "将一张随机卡牌置入你的手牌并使它的法力消耗变为0", function () {
+                    var p = ((id == 1) ? p1 : p2);
+                    var c = new Card(dict(random_el(card_dict)));
+                    c.value.ma = 0;
+                    p.hand.push(c);
+                    return true;
+                });
+            case "f-element":
+                var m = new map();
+                m.set("defrost", 1);
+                m.set("type", Type.element);
+                var c = new Creature(0, 2, new damage(0, 2), 2, "火元素", m, "解冻目标");
+                ent(c);
+                return c;
+            case "i-element":
+                var m = new map();
+                m.set("freezing", 1);
+                m.set("type", Type.element);
+                var c = new Creature(0, 2, new damage(0, 1), 3, "冰元素", m, "冻结目标");
+                ent(c);
+                return c;
+            case "m-element":
+                var m = new map();
+                m.set("p", 1);
+                m.set("type", Type.element);
+                return new Creature(0, 3, new damage(3), 2, "金元素", m, "穿透");
+            case "wi-element":
+                var m = new map();
+                m.set('atn', 2);
+                m.set("charge", 1);
+                m.set("type", Type.element);
+                return new Creature(0, 3, new damage(1), 2, "风元素", m, "冲锋;风怒");
+            case "gravity":
+                return new Magic(0, 4, "重力反转", "使所有飞行生物变为近战，非飞行生物变为飞行", function () {
+                    p1.deck.forEach(function (e) { if (e.r == range.FLYING) {
+                        e.r = range.GROUND, e.m.set("range", 0);
+                    }
+                    else {
+                        e.r = range.FLYING, e.m.set("range", 2);
+                    } });
+                    p2.deck.forEach(function (e) { if (e.r == range.FLYING) {
+                        e.r = range.GROUND, e.m.set("range", 0);
+                    }
+                    else {
+                        e.r = range.FLYING, e.m.set("range", 2);
+                    } });
+                    return true;
+                });
+            case "m-b":
+                return new Magic(0, 0, "魔法球", "你的法力+1", function () {
+                    var p = ((id == 1) ? p1 : p2);
+                    p.m++;
+                    return true;
+                });
+            case "drugI":
+                return new Magic(0, 2, "力量药剂", "使你的英雄获得+1力量", function () {
+                    var p = ((id == 1) ? p1 : p2);
+                    buff(p.that, new damage(1));
+                    return true;
+                });
+            case "drugIII":
+                return new Magic(0, 2, "魔力药剂", "使你的英雄获得+1法强" + (rarity.LEGENDARY == x ? "并获得1魔法伤害" : ""), function () {
+                    var p = ((id == 1) ? p1 : p2);
+                    p.ms++;
+                    if (rarity.LEGENDARY == this.rare)
+                        buff(p.that, new damage(0, 1));
+                    return true;
+                });
+            case "clone":
+                return new Magic(2, 4, "克隆法术", (rarity.LEGENDARY == x ? "召唤目标生物的复制" : "召唤目标生物的1/1复制"), function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    var p = ((id == 1) ? p1 : p2);
+                    if (!isInt(cmd[3])) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    n = parseInt(cmd[3]);
+                    var c = pr.deck[n];
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var m = new map(c.m);
+                    m.set("charge", 1);
+                    var d = new damage(0);
+                    if (c.at.m > c.at.p)
+                        d.m = 1;
+                    else
+                        d.p = 1;
+                    var c1 = new Creature(0, 4, (rarity.LEGENDARY == this.rare ? c.at["new"]() : d), (rarity.LEGENDARY == this.rare ? c.hp : 1), "克隆的" + pr.deck[n].c_name, m);
+                    c1.id = id;
+                    c1.std_at = c.std_at;
+                    c1.std_ated = c.std_ated;
+                    c1.can_t = c.can_t;
+                    c1.toggle = c.toggle;
+                    c1.death = c.death;
+                    call(p, c1);
+                    return true;
+                });
+            case "sniper":
+                var m = new map();
+                m.set("range", 1);
+                if (x == rarity.LEGENDARY)
+                    m.set("p"), m.set("c", 0.5);
+                m.set("hide", true);
+                return new Creature(0, 4, new damage(5), 2, "狙击手", m, "远程;隐匿" + (rarity.LEGENDARY == x ? ";暴击(50%);穿透" : ""));
+            case "drugII":
+                return new Magic(1, 2, "治疗药剂", "使目标恢复2+点生命", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    var p = ((id == 1) ? p1 : p2);
+                    if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    if (cmd[3] == undefined) {
+                        cure(pr.that, 2 + p.ms);
+                        return true;
+                    }
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    cure(pr.deck[n], 2 + p.ms);
+                    return true;
+                });
+            case "snake":
+                var m = new map();
+                m.set("poison", 1);
+                m.set("add", 1);
+                return new Creature(0, 2, new damage(1), 1, "蛇", m, "附结;剧毒");
+            case "guard":
+                var m = new map();
+                m.set("type", Type.undead);
+                m.set("shield", 2);
+                if (rarity.LEGENDARY == x)
+                    m.set("s-shield", 1), m.set("taunt", 1);
+                return new Creature(0, 2, new damage(1), 1, "骷髅守卫", m, (rarity.LEGENDARY == x ? "圣盾(1);嘲讽" : ""));
+            case "poisonous":
+                return new Magic(2, 3, "武器淬毒", "如果目标生物不具剧毒,使它获得剧毒,否则使它获得+1攻击力", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    if (pr.deck[n].poisonous)
+                        buff(pr.deck[n], new damage(0, 1));
+                    else
+                        pr.deck[n].poisonous = true, pr.deck[n].m.set("poison", 1);
+                    return true;
+                });
+            case "piercing":
+                return new Magic(2, 4, "武器锐化", "目标生物获得穿透且使它获得+1攻击力", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    pr.deck[n].m.set("p", 1);
+                    pr.deck[n].piercing = true;
+                    buff(pr.deck[n], new damage(1));
+                    return true;
+                });
+            case "kill":
+                return new Magic(2, 5, "影袭", "消灭目标生物", function () {
+                    var n = parseInt(cmd[2]);
+                    var pr = ((n == 0) ? p1 : p2);
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    pr.deck[n].alive = false;
+                    clean(pr);
+                    return true;
+                });
+            case "pain":
+                if (rarity.NORMAL == x)
+                    return new Magic(2, 5, "痛苦转化", "对目标生物造成4+点伤害,你回复4+点生命", function () {
+                        var n = parseInt(cmd[2]);
+                        var pr = ((n == 0) ? p1 : p2);
+                        n = parseInt(cmd[3]);
+                        if (n >= pr.deck.length) {
+                            alert("Index out of range");
+                            return false;
+                        }
+                        var p = ((id == 1) ? p1 : p2);
+                        harm(pr.deck[n], new damage(0, 4 + p.ms));
+                        cure(p.that, 4 + p.ms);
+                        clean(pr);
+                        return true;
+                    });
+                else
+                    return new Magic(2, 5, "痛苦转化", "消灭目标随从，你回复其最大生命值+点生命", function () {
+                        var n = parseInt(cmd[2]);
+                        var pr = ((n == 0) ? p1 : p2);
+                        n = parseInt(cmd[3]);
+                        if (n >= pr.deck.length) {
+                            alert("Index out of range");
+                            return false;
+                        }
+                        var p = ((id == 1) ? p1 : p2);
+                        pr.deck[n].alive = false;
+                        cure(p.that, pr.deck[n].max_hp + p.ms);
+                        clean(pr);
+                        return true;
+                    });
+            case "spill":
+                var m = new map();
+                var c = new Creature(0, 1, new damage(0, 2), 1, "溅射焰团", m, "亡语:随机对对手的一个生物造成1点伤害", "亡语:随机对对手的一个生物造成1点伤害");
+                if (c.rare != rarity.LEGENDARY)
+                    c.death = new eventlist(Array(function (tar) {
+                        tar.usd = true;
+                        var pr = ((tar.id == 2) ? p1 : p2);
+                        if (pr.deck.length == 0)
+                            return;
+                        var cd = random_el(pr.deck);
+                        harm(cd, new damage(0, 1));
+                        clean(pr);
+                    }));
+                else {
+                    c.death = new eventlist(Array(function (tar) {
+                        tar.usd = true;
+                        var pr = ((tar.id == 2) ? p1 : p2);
+                        if (pr.deck.length == 0)
+                            return;
+                        for (var i = 0; i < pr.deck.length; i++)
+                            harm(pr.deck[i], new damage(0, 1));
+                        ;
+                        clean(pr);
+                    }));
+                    c.c_attr = c.const_attr = "亡语:对所有敌方生物造成1点伤害";
                 }
-                var c;
-                n = parseInt(cmd[3]);
-                if (n >= pr.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                c = pr.deck[n];
-                harm(c, new damage(0, 1 + p.ms));
-                if (Type.summon == c.type)
-                    c.at.p += 1 + p.ms;
-                clean(pr);
-                return true;
-            }, x);
-        case "space":
-            return new Magic(0, 8, "扭曲虚空", "沉默并消灭所有生物", function () {
-                p1.deck.forEach(function (c) { _silence(c); });
-                p2.deck.forEach(function (c) { _silence(c); });
-                clean(p1);
-                clean(p2);
-                return true;
-            }, x);
-        case "smoke":
-            return new Magic(2, 4, "烟雾弹", "使一个随从及其相邻随从获得隐匿", function () {
-                var n = parseInt(cmd[2]);
-                if (n != 1 && n != 0) {
-                    alert("Index out of range");
-                    return false;
-                }
-                var p = p_(n + 1);
-                if (!isInt(cmd[3]) && cmd[3] != undefined) {
-                    alert("Invalid parameter");
-                    return false;
-                }
-                n = parseInt(cmd[3]);
-                if (n >= p.deck.length) {
-                    alert("Index out of range");
-                    return false;
-                }
-                adj(parseInt(cmd[2]) + 1, n).forEach(function (c) { hide(c); });
-                return true;
-            }, x);
-        case "ma-element":
-            var m = new map();
-            m.set("ms", 1);
-            m.set("type", Type.element);
-            m.set("rare", x);
-            return new Creature(0, 2, new damage(0, 1), 1, "魔力元素", m, "法强+1");
+                ent(c);
+                return c;
+            case "mind": return new Magic(0, 2, "心灵震爆", "对对手造成5+点伤害", function () { return (harm((id == 1 ? p2 : p1).that, new damage(0, 5 + ((id == 1) ? p1 : p2).ms)), true); });
+            case "blast":
+                return new Magic(1, 10, "炎爆术", "对一个单位造成10+点伤害并解冻它", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    var c;
+                    if (cmd[3] == undefined) {
+                        c = pr.that;
+                    }
+                    else {
+                        n = parseInt(cmd[3]);
+                        if (n >= pr.deck.length) {
+                            alert("Index out of range");
+                            return false;
+                        }
+                        c = pr.deck[n];
+                    }
+                    var p = ((id == 1) ? p1 : p2);
+                    harm(c, new damage(0, 10 + p.ms));
+                    defrost(c);
+                    clean(pr);
+                    return true;
+                });
+            case "true-shield":
+                var ma = new Magic(2, 0, "真言术·盾", "使一个生物获得+2+生命" + (rarity.LEGENDARY == x ? "并获得2+护盾" : ""), function () { });
+                ma.effect = function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var p = ((id == 1) ? p1 : p2);
+                    buff(pr.deck[n], new damage(0), 2 + p.ms);
+                    if (rarity.LEGENDARY == this.rare)
+                        pr.deck[n].shield += 2 + p.ms;
+                    return true;
+                }.bind(ma);
+                return ma;
+            case "destroy":
+                return new Magic(2, 3, "暗言术·灭", "摧毁一个力量>=5的生物", function () {
+                    var n = parseInt(cmd[2]);
+                    var pr = ((n == 0) ? p1 : p2);
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    if (pr.deck[n].at.p < 5) {
+                        alert("Creature chosen doesn't satisfy requirements");
+                        return false;
+                    }
+                    pr.deck[n].alive = false;
+                    clean(pr);
+                    return true;
+                });
+            case "defense":
+                return new Magic(1, 2, "防御姿态", (x != rarity.LEGENDARY ? "使目标获得3+点护盾" : "使目标生物获得1层圣盾"), (x != rarity.LEGENDARY ? function () {
+                    var n = parseInt(cmd[2]);
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    var p = ((id == 1) ? p1 : p2);
+                    if (cmd[3] == undefined) {
+                        pr.that.shield += 3 + p.ms;
+                        return true;
+                    }
+                    n = parseInt(cmd[3]);
+                    pr.deck[n].shield += 3 + p.ms;
+                    return true;
+                } : function () {
+                    var n = parseInt(cmd[2]);
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!isInt(cmd[3])) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    n = parseInt(cmd[3]);
+                    pr.deck[n].sacred_shield++;
+                    return true;
+                }));
+            case "shotgun":
+                var m = new map();
+                m.set("range");
+                var a = new Creature(0, 5, new damage(4), 3, "霰弹枪手", m, "伤害溅射", "伤害溅射");
+                a.attack = function (at_ed) {
+                    var pr = ((id == 2) ? p1 : p2);
+                    a.std_at(at_ed);
+                    if (pr.that == at_ed)
+                        return;
+                    var n = parseInt(cmd[2]);
+                    if (n >= 1)
+                        a.std_at(pr.deck[n - 1], 0.5), a.atl++;
+                    if (n < pr.deck.length - 1)
+                        a.std_at(pr.deck[n + 1], 0.5), a.atl++;
+                };
+                return a;
+            case "ex1":
+                var m = new map();
+                x = rarity.LEGENDARY;
+                m.set("s-shield", 1);
+                var a = new Creature(0, 5, new damage(0), 1, "实验体I", m, "圣盾;当受到战斗伤害时,获得+1/+1和圣盾", "当收到战斗伤害时,获得+1/+1和圣盾");
+                a.harmed = function () { return (buff(a, new damage(1), 1), a.sacred_shield++); };
+                return a;
+            case "zombie":
+                var m = new map();
+                var a = new Creature(0, 4, new damage(2), 5, "母体", m, "当完成击杀时," + (rarity.LEGENDARY == x ? "" : "50%概率") + "使目标变为我方僵尸", "当完成击杀时," + (rarity.LEGENDARY == x ? "" : "50%概率") + "使目标变为我方僵尸");
+                a.kill = function (tar) {
+                    if (tar.type == Type.building)
+                        return;
+                    var p = ((this.id == 1) ? p1 : p2);
+                    if (rarity.LEGENDARY == this.rare || Math.random() >= 0.5) {
+                        var y = new Creature(0, tar.ma, tar.max_at, tar.max_hp, "僵尸", new map(), "亡语:对敌方英雄造成1点魔法伤害", "亡语:对敌方英雄造成1点魔法伤害");
+                        y.death = new eventlist([function (tar) {
+                                harm(pr_(tar).that, new damage(0, 1));
+                            }]);
+                        call(p, y);
+                    }
+                };
+                return a;
+            case "tomb":
+                var m = new map();
+                m.set("atn", 0);
+                m.set("type", Type.building);
+                var a = new Creature(0, 4, new damage(0), 5, "骷髅墓碑", m, "回合结束时，召唤1个骷髅;亡语:召唤3个骷髅", "回合结束时，召唤1个骷髅;亡语:召唤3个骷髅");
+                a.end = new eventlist([function (c) {
+                        var p = ((c.id == 1) ? p1 : p2);
+                        call(p, dict("skeleton"));
+                    }]);
+                a.death = new eventlist([function (c) {
+                        var p = ((c.id == 1) ? p1 : p2);
+                        call(p, dict("skeleton"));
+                        call(p, dict("skeleton"));
+                        call(p, dict("skeleton"));
+                    }]);
+                return a;
+            case "wi-doc":
+                var m = new map();
+                var a = new Creature(2, 1, new damage(2), 1, "巫医", m, "战吼:为目标回复2点血量");
+                a.appear = function () {
+                    if (cmd.length != 4 && cmd.length != 3) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    if (!cmd[3]) {
+                        cure(pr.that, 2);
+                        return true;
+                    }
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    cure(pr.deck[n], 2);
+                    return true;
+                };
+                return a;
+            case "bomb-man":
+                var m = new map();
+                m.set("type", Type.undead);
+                m.set("range");
+                var a = new Creature(0, 3, new damage(2, 1), 2, "炸弹兵", m, "伤害溅射", "伤害溅射");
+                a.attack = function (at_ed) {
+                    var pr = ((id == 2) ? p1 : p2);
+                    a.std_at(at_ed);
+                    if (pr.that == at_ed)
+                        return;
+                    var n = parseInt(cmd[2]);
+                    if (n >= 1)
+                        a.std_at(pr.deck[n - 1], 0.5), a.atl++;
+                    if (n < pr.deck.length - 1)
+                        a.std_at(pr.deck[n + 1], 0.5), a.atl++;
+                };
+                ent(a);
+                return a;
+            case "ma-exp":
+                return new Magic(0, 3, "魔爆术", "对每个敌方生物造成1+点魔法伤害", function () {
+                    var pr = ((id == 2) ? p1 : p2);
+                    var p = ((id == 1) ? p1 : p2);
+                    pr.deck.forEach(function (e) { harm(e, new damage(0, 1 + p.ms)); });
+                    clean(pr);
+                    return true;
+                });
+            case "b-cat":
+                var m = new map();
+                m.set("revive", 8);
+                m.set("ms", 1);
+                var a = new Creature(0, 5, new damage(1), 1, "黑猫", m, "复生(8),法强+1");
+                return a;
+            case "hxbs":
+                var m = new map();
+                m.set("range");
+                var a = new Creature(0, 4, new damage(2), 3, "回旋镖手", m, "攻击时会造成2次伤害", "攻击时会造成2次伤害");
+                a.attack = function (at_ed) {
+                    a.std_at(at_ed);
+                    a.std_at(at_ed);
+                    a.atl++;
+                };
+                return a;
+            case "su-base":
+                var m = new map();
+                m.set("type", Type.summon);
+                return new Creature(0, 2, new damage(2), 2, "标准型召唤兽", m);
+            case "su-defense":
+                var m = new map();
+                m.set("taunt", 1);
+                m.set("type", Type.summon);
+                return new Creature(0, 2, new damage(1), 3, "防御型召唤兽", m);
+            case "su-attack":
+                var m = new map();
+                m.set("charge", 1);
+                m.set("type", Type.summon);
+                return new Creature(0, 2, new damage(3), 1, "攻击型召唤兽", m);
+            case "su-magic":
+                var m = new map();
+                m.set("ms", 1);
+                m.set("type", Type.summon);
+                return new Creature(0, 2, new damage(0, 1), 1, "法术型召唤兽", m);
+            case "su-buff":
+                var m = new map();
+                m.set("atb", new damage(1));
+                m.set("hpb", 1);
+                m.set("type", Type.summon);
+                return new Creature(0, 2, new damage(1), 2, "增益型召唤兽", m);
+            case "whip":
+                return new Magic(2, 1, "鞭策", "对一个生物造成1+点伤害,如果它是召唤兽,使它攻击力+1+", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var pr = ((n == 0) ? p1 : p2);
+                    var p = ((id == 1) ? p1 : p2);
+                    if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    var c;
+                    n = parseInt(cmd[3]);
+                    if (n >= pr.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    c = pr.deck[n];
+                    harm(c, new damage(0, 1 + p.ms));
+                    if (Type.summon == c.type)
+                        c.at.p += 1 + p.ms;
+                    clean(pr);
+                    return true;
+                });
+            case "space":
+                return new Magic(0, 8, "扭曲虚空", "沉默并消灭所有生物", function () {
+                    p1.deck.forEach(function (c) { _silence(c); });
+                    p2.deck.forEach(function (c) { _silence(c); });
+                    clean(p1);
+                    clean(p2);
+                    return true;
+                });
+            case "smoke":
+                return new Magic(2, 4, "烟雾弹", "使一个随从及其相邻随从获得隐匿", function () {
+                    var n = parseInt(cmd[2]);
+                    if (n != 1 && n != 0) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    var p = p_(n + 1);
+                    if (!isInt(cmd[3]) && cmd[3] != undefined) {
+                        alert("Invalid parameter");
+                        return false;
+                    }
+                    n = parseInt(cmd[3]);
+                    if (n >= p.deck.length) {
+                        alert("Index out of range");
+                        return false;
+                    }
+                    adj(parseInt(cmd[2]) + 1, n).forEach(function (c) { hide(c); });
+                    return true;
+                });
+            case "ma-element":
+                var m = new map();
+                m.set("ms", 1);
+                m.set("type", Type.element);
+                return new Creature(0, 2, new damage(0, 1), 1, "魔力元素", m, "法强+1");
+        }
+        return null;
     }
-    return null;
+    var x1 = _dict(name);
+    x1.rare = x;
+    x1.origin = name;
+    return x1;
 }
 function cure(c, n) {
     if (n === void 0) { n = 0; }
@@ -1535,7 +1514,9 @@ function skill_dict(name) {
             return [new Skill(0, 2, function () {
                     var p = ((id == 1) ? p1 : p2);
                     ++p.x;
-                    call(p, new Creature(0, 1, new damage(1, Math.floor(p.x / 3)), 1 + Math.floor(p.x / 3), "士兵", new map()));
+                    var c = dict("soldier");
+                    buff(c, new damage(0, Math.floor(p.x / 3)), Math.floor(p.x / 3));
+                    call(p, c);
                     return true;
                 }, "召唤", "将一个1/1的士兵置入战场", "每召唤3个士兵,使之后召唤的士兵获得+1/+1"), new Creature(0, 0, new damage(1), 30, "圣骑士", new map())];
         case "magic":
