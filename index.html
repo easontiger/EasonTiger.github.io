@@ -50,14 +50,13 @@ function rand(l) {
  * @Author: Eason.Tiger.Huang
  * @Date: 2021-03-23 19:18:03
  * @Last Modified by: Eason.Tiger.Huang
- * @Last Modified time: 2021-07-12 19:30:12
+ * @Last Modified time: 2021-07-13 14:16:59
  */
 var card_dict = ["skeleton", "s-slime", "spider", "goblin", "barbarian", "X-bow", "fetch", "hope", "arrows", "armor", "fence", "t_wall", "reap", "squash", "p-spider",
     "archer", "shooter", "spear", "mouse", "b-angel", "m-slime", "l-slime", "to_sheep", "fireball", "frozen", "flame", "rand", "f-element", "i-element", "m-element", "wi-element",
     "gravity", "drugI", "clone", "sniper", "drugII", "snake", "guard", "poisonous", "piercing", "kill", "pain", "spill", "mind", "blast", "true-shield", "destroy", "poison", "defense",
-    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat", "hxbs", "whip", "space", "smoke"];
+    "shotgun", "ex1", "zombie", "tomb", "wi-doc", "bomb-man", "ma-exp", "b-cat", "hxbs", "whip", "space", "smoke", "ma-element"];
 var summon = ["su-base", "su-attack", "su-defense", "su-magic", "su-buff", "drugIII"];
-var element = ["f-element", "i-element", "m-element", "wi-element"];
 var cmd, ald = false;
 var range;
 (function (range) {
@@ -98,6 +97,9 @@ var damage = /** @class */ (function () {
     }
     damage.prototype.toString = function () {
         return this.p + "+" + this.m;
+    };
+    damage.prototype["new"] = function () {
+        return new damage(this.p, this.m);
     };
     return damage;
 }());
@@ -985,7 +987,7 @@ function dict(name) {
                     d.m = 1;
                 else
                     d.p = 1;
-                var c1 = new Creature(0, 4, (rarity.LEGENDARY == this.rare ? c.at : d), (rarity.LEGENDARY == this.rare ? c.hp : 1), "克隆的" + pr.deck[n].c_name, m);
+                var c1 = new Creature(0, 4, (rarity.LEGENDARY == this.rare ? c.at["new"]() : d), (rarity.LEGENDARY == this.rare ? c.hp : 1), "克隆的" + pr.deck[n].c_name, m);
                 c1.id = id;
                 c1.std_at = c.std_at;
                 c1.std_ated = c.std_ated;
@@ -1406,6 +1408,7 @@ function dict(name) {
             var m = new map();
             m.set("atb", new damage(1));
             m.set("hpb", 1);
+            m.set("rare", x);
             m.set("type", Type.summon);
             return new Creature(0, 2, new damage(1), 2, "增益型召唤兽", m);
         case "whip":
@@ -1462,6 +1465,12 @@ function dict(name) {
                 adj(parseInt(cmd[2]) + 1, n).forEach(function (c) { hide(c); });
                 return true;
             }, x);
+        case "ma-element":
+            var m = new map();
+            m.set("ms", 1);
+            m.set("type", Type.element);
+            m.set("rare", x);
+            return new Creature(0, 2, new damage(0, 1), 1, "魔力元素", m, "法强+1");
     }
     return null;
 }
